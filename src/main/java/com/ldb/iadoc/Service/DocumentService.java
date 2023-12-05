@@ -27,7 +27,7 @@ public class DocumentService {
         check= documentImpl.SaveDocument(documentReq);
         checkSharing= documentImpl.saveSharingDo(documentReq);
         try {
-            if (check > 0) {
+            if (check > 0 && checkSharing > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
                 result.setMessage(message);
