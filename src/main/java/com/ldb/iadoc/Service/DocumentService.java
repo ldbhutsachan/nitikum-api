@@ -1,0 +1,304 @@
+package com.ldb.iadoc.Service;
+
+import com.ldb.iadoc.Dao.DocumentDao.DocumentImpl;
+import com.ldb.iadoc.Mesage.Constant;
+import com.ldb.iadoc.Mesage.Message;
+import com.ldb.iadoc.Model.Document.*;
+import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
+import com.ldb.iadoc.Model.Document.Report.groupDocType;
+import com.ldb.iadoc.Model.ReponeRes;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class DocumentService {
+    @Autowired
+    DocumentImpl documentImpl;
+    public ReponeRes SaveDocument(DocumentReq documentReq) throws ParseException {
+        ReponeRes result = new ReponeRes();
+        Message message = new Message();
+        int check = 0;
+        int checkSharing = 0;
+        check= documentImpl.SaveDocument(documentReq);
+        checkSharing= documentImpl.saveSharingDo(documentReq);
+        try {
+            if (check > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                return result;
+            }
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgFail);
+            result.setMessage(message);
+            return result;
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return  result;
+    }
+    public DocumentAuditRes getAuditListCheck(DocumentReq documentReq){
+        Message message = new Message();
+        DocumentAuditRes result = new DocumentAuditRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        List<DocumentAudit> listData2 = new ArrayList<>();
+        listData = documentImpl.getAuditDocument(documentReq);
+        try {
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData2);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public DocumentAuditRes getWaitListCheckByUser(DocumentReq documentReq){
+        Message message = new Message();
+        DocumentAuditRes result = new DocumentAuditRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        List<DocumentAudit> listData2 = new ArrayList<>();
+        listData = documentImpl.getWaitListCheckByUser(documentReq);
+        try {
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData2);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public DocumentAuditRes getShareDocument(DocumentReq documentReq){
+        Message message = new Message();
+        DocumentAuditRes result = new DocumentAuditRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        List<DocumentAudit> listData2 = new ArrayList<>();
+        listData = documentImpl.getShareDocument(documentReq);
+        try {
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData2);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public ReponeRes ReadDoc(DocumentReq documentReq){
+        Message message = new Message();
+        ReponeRes result = new ReponeRes();
+        int checkData = documentImpl.ReadData(documentReq);
+        try {
+            if(checkData > 0 ){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgSave);
+                result.setMessage(message);
+                return result;
+            }
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgFailSave);
+            result.setMessage(message);
+            return result;
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    //=====================================audit document=================
+    public ReponeRes rejectDocument(DocumentReq documentReq){
+        Message message = new Message();
+        ReponeRes result = new ReponeRes();
+        int checkData = documentImpl.rejectDocument(documentReq);
+        try {
+            if(checkData > 0 ){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgReject);
+                result.setMessage(message);
+                return result;
+            }
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgFailReject);
+            result.setMessage(message);
+            return result;
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public ReponeRes audit_doc(DocumentReq documentReq){
+        Message message = new Message();
+        ReponeRes result = new ReponeRes();
+        int checkData = documentImpl.AuditDocument(documentReq);
+        try {
+            if(checkData > 0 ){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgAudit);
+                result.setMessage(message);
+                return result;
+            }
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgFailAudit);
+            result.setMessage(message);
+            return result;
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    //************************************
+    public DocumentReportRes getReportDocument(DocumentReq documentReq) throws ParseException {
+        Message message = new Message();
+        DocumentReportRes result = new DocumentReportRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        List<DocumentAudit> listData2 = new ArrayList<>();
+
+
+        listData = documentImpl.getReportDocument(documentReq);
+        try {
+            List<DocumentAudit>listGroupHead = new ArrayList<>();
+            if (listData.size() > 0) {
+                result.setResData(listData);
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+
+                result.setResData(listData2);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+}
