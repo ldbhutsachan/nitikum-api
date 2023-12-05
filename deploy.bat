@@ -10,7 +10,9 @@ set VERSION=latest
 
 echo %VERSION%
 
-set IMAGE=khounkham/logistics-api
+set IMAGE=registry.ldblao.la/ldbhutsachan/iadoc
+
+
 
 echo Building image: %IMAGE%:%VERSION%
 
