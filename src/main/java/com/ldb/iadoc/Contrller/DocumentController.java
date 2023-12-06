@@ -101,7 +101,7 @@ public class DocumentController {
                     @RequestParam("shareUserById") String shareUserById,
                     @RequestParam("markerId") String markerId,
                     @RequestParam("sharingType") String sharingType,
-                    @RequestParam("docStatus") String docStatus,
+                   // @RequestParam("docStatus") String docStatus,
                     @RequestParam("details") String details
     ){
         log.info("====================================================>SaveDoc controller<=========================");
@@ -120,7 +120,7 @@ public class DocumentController {
             data.setShareUserById(shareUserById);
             data.setMarkerId(markerId);
             data.setSharingType(sharingType);
-            data.setDocStatus(docStatus);
+         //   data.setDocStatus(docStatus);
             data.setDetails(details);
             String fileNameEn = "";
             String fileNameLa = "";

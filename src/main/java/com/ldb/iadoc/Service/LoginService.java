@@ -140,8 +140,8 @@ public class LoginService {
                 result.setResData(listData);
                 return result;
             }else {
-                message.setResCode(Constant.codeError);
-                message.setResMgs(Constant.msgUserError);
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
                 result.setMessage(message);
                 result.setResData(listData);
                 return result;

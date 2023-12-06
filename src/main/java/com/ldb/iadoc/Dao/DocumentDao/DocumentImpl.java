@@ -68,14 +68,14 @@ public class DocumentImpl implements DocumentDao {
         Date doDate = sdf.parse(documentReq.getDocDate());
         java.sql.Date docDate = new java.sql.Date(doDate.getTime());
         SQL="insert into DOC_CREATE (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS) " +
-                "values (?,?,?,?,?,?,?,?,sysdate,?,?,?)";
+                "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
                 documentReq.getDocNo(), //ລະຫັດເອກະສານ
                 documentReq.getDocType(), //ປະເພດເອກະສານ
                 docDate, //ເອກະສານລົງວັນທີ່
                 documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
-                documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
+                //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
                 documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
                 documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
                 documentReq.getMarkerId(),//ຜູ້ສ້າງ
