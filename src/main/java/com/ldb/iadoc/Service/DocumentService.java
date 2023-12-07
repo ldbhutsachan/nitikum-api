@@ -1,5 +1,6 @@
 package com.ldb.iadoc.Service;
 
+import com.ldb.iadoc.Contrller.LoginController;
 import com.ldb.iadoc.Dao.DocumentDao.DocumentImpl;
 import com.ldb.iadoc.Mesage.Constant;
 import com.ldb.iadoc.Mesage.Message;
@@ -7,6 +8,8 @@ import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
 import com.ldb.iadoc.Model.Document.Report.groupDocType;
 import com.ldb.iadoc.Model.ReponeRes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -19,24 +22,30 @@ import java.util.List;
 public class DocumentService {
     @Autowired
     DocumentImpl documentImpl;
+    public static final Logger log = LogManager.getLogger(DocumentService.class);
+
     public ReponeRes SaveDocument(DocumentReq documentReq) throws ParseException {
         ReponeRes result = new ReponeRes();
         Message message = new Message();
         int check = 0;
         int checkSharing = 0;
+
         check= documentImpl.SaveDocument(documentReq);
         checkSharing= documentImpl.saveSharingDo(documentReq);
         try {
+            log.info("check:"+check);
+            log.info("checkSharing:"+checkSharing);
             if (check > 0 && checkSharing > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
                 result.setMessage(message);
                 return result;
+            }else {
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgFail);
+                result.setMessage(message);
+                return result;
             }
-            message.setResCode(Constant.codeError);
-            message.setResMgs(Constant.msgFail);
-            result.setMessage(message);
-            return result;
         }catch (Exception e){
             if (e instanceof NullPointerException) {
                 System.out.println("NullPointerException occurred");

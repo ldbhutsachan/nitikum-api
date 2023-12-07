@@ -43,8 +43,9 @@ public class DocumentImpl implements DocumentDao {
         log.info("==========share data to User==========");
         String ListUser = documentReq.getShareUserById();
         String str = ListUser;
-        String trimmedStr = str.substring(1, str.length() - 1);
-        String[] userArray = trimmedStr.split("\\],\\[");
+        String trimmedStr = str.substring(0, str.length() - 0);
+        String[] userArray = trimmedStr.split(",");
+
         System.out.println("show array:"+Arrays.toString(userArray));
         SQL="insert into DOC_SHARING (DOC_TYPE,USER_ALLOW,CREATE_DATE,SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
         for (String user : userArray) {
@@ -53,7 +54,7 @@ public class DocumentImpl implements DocumentDao {
                     user,
                     documentReq.getSharingType());
         }
-        return 0;
+        return 1;
     }
     @Override
     public int ReadData(DocumentReq documentReq) {
@@ -67,6 +68,10 @@ public class DocumentImpl implements DocumentDao {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date doDate = sdf.parse(documentReq.getDocDate());
         java.sql.Date docDate = new java.sql.Date(doDate.getTime());
+
+       // String pathEn = "https://dehome.ldblao.la/mobile/QR/IMGMOBILE/iadoc/";
+        //String pathE = documentReq.getDocPath()+pathEn;
+       // String pathL = documentReq.getDocPathLa()+pathEn;
         SQL="insert into DOC_CREATE (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS) " +
                 "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
