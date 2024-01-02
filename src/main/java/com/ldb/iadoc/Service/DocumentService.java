@@ -600,8 +600,6 @@ public class DocumentService {
         DocumentReportRes result = new DocumentReportRes();
         List<DocumentAudit> listData = new ArrayList<>();
         List<DocumentAudit> listData2 = new ArrayList<>();
-
-
         listData = documentImpl.getReportDocument(documentReq);
         try {
             List<DocumentAudit>listGroupHead = new ArrayList<>();

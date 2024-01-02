@@ -665,7 +665,6 @@ public class DocumentImpl implements DocumentDao {
             }
         });
     }
-
     @Override
     public List<DocumentAudit> getReportDocument(DocumentReq documentReq) throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -676,12 +675,12 @@ public class DocumentImpl implements DocumentDao {
         log.info("docDate:"+docDate);
         log.info("endDate:"+endDate);
         if(documentReq.getStartDate() == null){
-            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"'  order by ID asc";
+            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' or SHARING_TYPE ='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ'  order by ID asc";
         }else if(documentReq.getStartDate() != null){
             SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' and  " +
-                    "CREATED_DATE between '"+docDate+"' and '"+endDate+"' order by ID asc";
+                    "CREATED_DATE between '"+docDate+"' and '"+endDate+"' or SHARING_TYPE ='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
         }else {
-            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' order by ID asc";
+            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' or SHARING_TYPE ='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
