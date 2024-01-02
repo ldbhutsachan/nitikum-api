@@ -5,12 +5,14 @@ import com.ldb.iadoc.Model.Branch.BranchReq;
 import com.ldb.iadoc.Model.Branch.ComboBand.ComboBranch;
 import com.ldb.iadoc.Model.Department.Dept;
 import com.ldb.iadoc.Model.Department.DeptReq;
+import com.ldb.iadoc.Model.Document.DocumentReq;
 import com.ldb.iadoc.Model.Login.Login;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwd;
 import com.ldb.iadoc.Model.Login.LoginReq;
 import com.ldb.iadoc.Model.Login.SignupReq;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSection;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionReq;
+import com.ldb.iadoc.Model.Section.ExcusiveSection.ComboSectionExReq;
 import com.ldb.iadoc.Model.Section.Section;
 import com.ldb.iadoc.Model.Section.SectionReq;
 import com.ldb.iadoc.Model.UserType.UserType;
@@ -22,6 +24,12 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface LoginDao {
+    public List<Login> CheckUser(DocumentReq documentReq);
+    public List<Branch> getBranchExcutive(BranchReq branchReq);
+    public int saveBranchExcutive(BranchReq branchReq);
+    public List<ComboSection> getComboxDeptExcutive(ComboSectionExReq sectionReq);
+    public List<ComboSection> getComboxSectionsExcutive(ComboSectionExReq sectionReq);
+    public List<ComboBranch> getComboxBranchExcutive();
     public List<ComboUser> getComboxUser(ComboUserReq loginReq);
     public List<ComboSection> getComboxSections(ComboSectionReq sectionReq);
     List<LoginChangPwd> checkOldPwd(LoginReq loginReq);

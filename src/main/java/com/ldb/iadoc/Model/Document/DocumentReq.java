@@ -11,7 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DocumentReq {
+
     private String id;
+    private String conName;
+    private String conName2;
+    private String taiMard;
+    private String yearIn;
     private String docNo;
     private String subjectName;
     private String docDate;
@@ -19,6 +24,7 @@ public class DocumentReq {
     private String related;
     private String deptCode;
     private String shareUserById;
+    private String secCode;
     private String docStatus;
     private String docPath;
     private String docPathLa;

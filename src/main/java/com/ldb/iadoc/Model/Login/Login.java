@@ -1,6 +1,7 @@
 package com.ldb.iadoc.Model.Login;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+
 public class Login {
 
     private Long  iD;
@@ -24,7 +26,6 @@ public class Login {
     private String userStatus;
     private String typeDesc;
     private String typeDesLa;
-
     private String secCode;
     private String secDescEn;
     private String secDescLa;

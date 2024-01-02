@@ -10,6 +10,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DocumentAudit {
+    private String typeStatus;
+    private String connectKanang;
+    private String connectKanangAll;
+    private String connects;
+    private String taiMard;
+    private String yearIn;
+    private String taiMardDes;
+    private String yearInDes;
     private String id;
     private String docNo;
     private String docType;
@@ -22,12 +30,10 @@ public class DocumentAudit {
     private String approveId;
     private String deleteId;
     private String sharingType;
-
     private String  docPathLa;
     private String  docDate;
+    private String details;
     private String approveDate;
-
-
     //-----------------------dept
     private String depDescEN;
     private String depDescLAO;
@@ -38,9 +44,9 @@ public class DocumentAudit {
     //----------------------doc type desc
     private String docDescEn;
     private String docDescLao;
-
     private String createBy;
     private String typeAMT;
+    private String status;
 
 
 

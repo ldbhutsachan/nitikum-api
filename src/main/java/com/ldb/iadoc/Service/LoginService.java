@@ -14,6 +14,7 @@ import com.ldb.iadoc.Model.Department.Dept;
 import com.ldb.iadoc.Model.Department.DeptReq;
 import com.ldb.iadoc.Model.Department.DeptRes;
 import com.ldb.iadoc.Model.DocType.DocTypeReq;
+import com.ldb.iadoc.Model.Document.DocumentReq;
 import com.ldb.iadoc.Model.Login.Login;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwd;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwdRes;
@@ -24,6 +25,7 @@ import com.ldb.iadoc.Model.ReponeRes;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSection;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionReq;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionRes;
+import com.ldb.iadoc.Model.Section.ExcusiveSection.ComboSectionExReq;
 import com.ldb.iadoc.Model.Section.Section;
 import com.ldb.iadoc.Model.Section.SectionReq;
 import com.ldb.iadoc.Model.Section.SectionRes;
@@ -269,6 +271,76 @@ public class LoginService {
         }
         return result;
     }
+    public ComboSectionRes getComboxSectionsExcutive(ComboSectionExReq sectionReq){
+        Message message = new Message();
+        ComboSectionRes result =new ComboSectionRes();
+        List<ComboSection> listData = loginImpls.getComboxSectionsExcutive(sectionReq);
+        try{
+            if(listData.size() > 0){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public ComboSectionRes getComboxDeptExcutive(ComboSectionExReq sectionReq){
+        Message message = new Message();
+        ComboSectionRes result =new ComboSectionRes();
+        List<ComboSection> listData = loginImpls.getComboxDeptExcutive(sectionReq);
+        try{
+            if(listData.size() > 0){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
     public ReponeRes Signup(SignupReq signupReq) throws ParseException {
         Message message = new Message();
         ReponeRes  result =new ReponeRes();
@@ -400,8 +472,8 @@ public class LoginService {
                     return result;
                 }
             }else {
-                message.setResCode(Constant.codeDataNotFound);
-                message.setResMgs(Constant.msgDataNotFound);
+                message.setResCode(Constant.codeErrorLogin);
+                message.setResMgs(Constant.msgPasswordFail);
                 result.setMessage(message);
                 return result;
             }
@@ -690,6 +762,41 @@ public class LoginService {
         Message message = new Message();
         ComboBranchRes result =new ComboBranchRes();
         List<ComboBranch> listData = loginImpls.getComboxBranch();
+        try{
+            if(listData.size() > 0){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public ComboBranchRes getComboxBranchExcutive(){
+        Message message = new Message();
+        ComboBranchRes result =new ComboBranchRes();
+        List<ComboBranch> listData = loginImpls.getComboxBranchExcutive();
         try{
             if(listData.size() > 0){
                 message.setResCode(Constant.codeDone);

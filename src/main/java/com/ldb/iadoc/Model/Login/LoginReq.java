@@ -13,7 +13,6 @@ import lombok.Setter;
 public class LoginReq {
     private String userName;
     private String passWord;
-
     private String oldUserId;
     private String oldUserName;
     private String oldPassword;

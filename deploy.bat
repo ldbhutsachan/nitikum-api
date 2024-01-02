@@ -12,13 +12,9 @@ echo %VERSION%
 
 set IMAGE=registry.ldblao.la/ldbhutsachan/iadoc
 
-
-
 echo Building image: %IMAGE%:%VERSION%
 
 cmd /c mvn clean dependency:tree compile package
 
 cmd /c docker build -t %IMAGE%:%VERSION% .
 cmd /c docker push %IMAGE%:%VERSION%
-
-

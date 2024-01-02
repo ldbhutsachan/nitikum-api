@@ -10,5 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ComboSectionReq {
-    private String branchCode;
+    private String[] branchCode;
+    private String secCode;
 }

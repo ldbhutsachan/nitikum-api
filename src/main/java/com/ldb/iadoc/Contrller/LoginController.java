@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -37,10 +38,6 @@ public class LoginController {
     public static final Logger log = LogManager.getLogger(LoginController.class);
     @Autowired
     private LoginService loginService;
-//    @Autowired
-//    JwtUtils jwtUtils;
-//    @Autowired
-//    PasswordEncoder encoder;
     @CrossOrigin(origins = "*")
     @GetMapping("/test")
     public String test() throws Exception{
@@ -217,6 +214,7 @@ public class LoginController {
     @PostMapping("/Section/getComboxSections")
     public ComboSectionRes getComboxSections(@RequestBody ComboSectionReq sectionReq){
         log.info("====================================================>getComboxSections controller<=========================");
+        log.info("bb:"+ Arrays.toString(sectionReq.getBranchCode()));
         ComboSectionRes result =new ComboSectionRes();
         result = loginService.getComboxSections(sectionReq);
         return result;

@@ -5,12 +5,14 @@ import com.ldb.iadoc.Model.Branch.BranchReq;
 import com.ldb.iadoc.Model.Branch.ComboBand.ComboBranch;
 import com.ldb.iadoc.Model.Department.Dept;
 import com.ldb.iadoc.Model.Department.DeptReq;
+import com.ldb.iadoc.Model.Document.DocumentReq;
 import com.ldb.iadoc.Model.Login.Login;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwd;
 import com.ldb.iadoc.Model.Login.LoginReq;
 import com.ldb.iadoc.Model.Login.SignupReq;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSection;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionReq;
+import com.ldb.iadoc.Model.Section.ExcusiveSection.ComboSectionExReq;
 import com.ldb.iadoc.Model.Section.Section;
 import com.ldb.iadoc.Model.Section.SectionReq;
 import com.ldb.iadoc.Model.UserType.UserType;
@@ -26,6 +28,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 @Service
@@ -98,11 +101,15 @@ public class LoginImpl implements LoginDao{
     }
     @Override
     public List<ComboUser> getComboxUser(ComboUserReq loginReq) {
-        if(loginReq.getSecCode().equals("A")){
+        String sec[] = loginReq.getSecCode();
+        String ListUser = Arrays.toString(sec).replace("[","('").replace(",","','").replace("]","')");
+        String checkType = ListUser.replace("('","").replace("')","");
+
+        if(checkType.equals("A")){
             SQL="SELECT * FROM V_COMBOUSER";
         }
         else {
-            SQL="SELECT * FROM V_COMBOUSER where SEC_CODE='"+loginReq.getSecCode()+"'";
+            SQL="SELECT * FROM V_COMBOUSER where SEC_CODE in "+ListUser+"";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboUser>() {
             @Override
@@ -134,10 +141,35 @@ public class LoginImpl implements LoginDao{
     @Override
     public List<Section> getSection(SectionReq sectionReq) {
         if(sectionReq.getSecCode() == "" || sectionReq.getSecCode() == null ){
-            SQL="select * from V_SECTIONINFO order by SEC_CODE asc";
+            SQL="select * from V_SECTIONINFO where type='1' order by SEC_CODE asc";
         }
         else {
-            SQL="select * from V_SECTIONINFO where SEC_CODE='"+sectionReq.getSecCode()+"' order by SEC_CODE asc";
+            SQL="select * from V_SECTIONINFO where type='1' and SEC_CODE='"+sectionReq.getSecCode()+"' order by SEC_CODE asc";
+
+        }
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<Section>() {
+            @Override
+            public Section mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Section tr = new Section();
+                tr.setSecId(rs.getString("ID"));
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecDesc(rs.getString("SEC_DESC"));
+                tr.setSecDescLao(rs.getString("SEC_DESC_LAO"));
+                tr.setDeptCode(rs.getString("DEPT_CODE"));
+                tr.setDeptEN(rs.getString("DEPT_DESC"));
+                tr.setDeptLa(rs.getString("DEPT_DESC_LAO"));
+                return tr;
+            }
+        });
+       // return null;
+    }
+
+    public List<Section> getSectionsExcutive(SectionReq sectionReq) {
+        if(sectionReq.getSecCode() == "" || sectionReq.getSecCode() == null ){
+            SQL="select * from V_SECTIONINFO where type='2' order by SEC_CODE asc";
+        }
+        else {
+            SQL="select * from V_SECTIONINFO where type='2'  and SEC_CODE='"+sectionReq.getSecCode()+"' order by SEC_CODE asc";
 
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Section>() {
@@ -158,10 +190,16 @@ public class LoginImpl implements LoginDao{
     }
     @Override
     public List<ComboSection> getComboxSections(ComboSectionReq sectionReq) {
-        if(sectionReq.getBranchCode().equals("A")){
-            SQL="select * from V_COMBOSECTION";
+        String sec[] = sectionReq.getBranchCode();
+        String ListUser = Arrays.toString(sec).replace("[","('").replace(",","','").replace("]","')");
+        String checkType = ListUser.replace("('","").replace("')","");
+
+        if(checkType.equals("A")){
+            SQL="select * from V_COMBOSECTION order by SEC_CODE asc";
         }else {
-            SQL="select * from V_COMBOSECTION where BRANCHCODE ='"+sectionReq.getBranchCode()+"'";
+
+            SQL="select * from V_COMBOSECTION where BRANCHCODE in "+ListUser+" order by SEC_CODE asc";
+            System.out.println("s:"+SQL);
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboSection>() {
             @Override
@@ -173,6 +211,39 @@ public class LoginImpl implements LoginDao{
             }
         });
        // return null;
+    }
+    @Override
+    public List<ComboSection> getComboxSectionsExcutive(ComboSectionExReq sectionReq) {
+        if(sectionReq.getBranchCode().equals("A")){
+            SQL="select * from V_COMBOSECTION_EXCUTIVE order by SEC_CODE asc";
+        }else {
+            SQL="select * from V_COMBOSECTION_EXCUTIVE where BRANCHCODE ='"+sectionReq.getBranchCode()+"' order by SEC_CODE asc";
+        }
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboSection>() {
+            @Override
+            public ComboSection mapRow(ResultSet rs, int rowNum) throws SQLException {
+                ComboSection tr = new ComboSection();
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecDescLao(rs.getString("SEC_DESC_LAO"));
+                return tr;
+            }
+        });
+       // return null;
+    }
+    @Override
+    public List<ComboSection> getComboxDeptExcutive(ComboSectionExReq sectionReq) {
+            SQL="select * from V_COMBOSECTION_EXCUTIVE_TP_21 where SEC_CODE_IN ='"+sectionReq.getSecCode()+"' order by SEC_CODE asc";
+                System.out.println("SQL:"+SQL);
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboSection>() {
+            @Override
+            public ComboSection mapRow(ResultSet rs, int rowNum) throws SQLException {
+                ComboSection tr = new ComboSection();
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecDescLao(rs.getString("SEC_DESC_LAO"));
+                return tr;
+            }
+        });
+        // return null;
     }
     @Override
     public List<LoginChangPwd> checkOldPwd(LoginReq loginReq) {
@@ -315,7 +386,18 @@ public class LoginImpl implements LoginDao{
 
     @Override
     public int saveBranch(BranchReq branchReq) {
-        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE) values  (?,?,?,?,?)";
+        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type) values  (?,?,?,?,?,'1')";
+        return IADOCJdbcTemplate.update(SQL,new Object[]{
+                branchReq.getBranchCode(),
+                branchReq.getBrName(),
+                branchReq.getBrNameLa(),
+                branchReq.getLocation(),
+                branchReq.getBrType()
+        });
+    }
+    @Override
+    public int saveBranchExcutive(BranchReq branchReq) {
+        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type) values  (?,?,?,?,?,'2')";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 branchReq.getBranchCode(),
                 branchReq.getBrName(),
@@ -369,10 +451,51 @@ public class LoginImpl implements LoginDao{
             }
         });
     }
+
+
+
+    @Override
+    public List<Branch> getBranchExcutive(BranchReq branchReq) {
+        if(branchReq.getBranchCode() == null || branchReq.getBranchCode() == ""){
+            SQL="select * from BRANCH where type='2' order by ID asc";
+            System.out.println("SQL:"+SQL);
+        }else {
+            SQL="select * from BRANCH where type='2' and BRANCH_CODE='"+branchReq.getBranchCode() +"' order by ID asc";
+            System.out.println("SQL:"+SQL);
+        }
+
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<Branch>() {
+            @Override
+            public Branch mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Branch tr = new Branch();
+                tr.setID(rs.getString("ID"));
+                tr.setBranchCode(rs.getString("BRANCH_CODE"));
+                tr.setBrName(rs.getString("BRANCH_NAME"));
+                tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
+                tr.setLocation(rs.getString("LOCATION"));
+                tr.setBrType(rs.getString("BRANCH_TYPE"));
+                return tr;
+            }
+        });
+    }
     //==============================combox branch======================================
     @Override
     public List<ComboBranch> getComboxBranch() {
-            SQL="select * from V_COMBOBRANCH";
+            SQL="select * from V_COMBOBRANCH order by ORDERBY asc";
+            System.out.println("SQL:"+SQL);
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
+            @Override
+            public ComboBranch mapRow(ResultSet rs, int rowNum) throws SQLException {
+                ComboBranch tr = new ComboBranch();
+                tr.setBranchCode(rs.getString("BRANCH_CODE"));
+                tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
+                return tr;
+            }
+        });
+    }
+    @Override
+    public List<ComboBranch> getComboxBranchExcutive() {
+            SQL="select  ORDERBY,BRANCH_CODE,BRANCH_NAME_LAO from BRANCH where type='2' order by BRANCH_CODE desc";
             System.out.println("SQL:"+SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
             @Override
@@ -388,7 +511,17 @@ public class LoginImpl implements LoginDao{
 //=======================================section service
     @Override
     public int saveSection(SectionReq sectionReq) {
-        SQL="insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE) values (?,?,?,?)";
+        SQL="insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'1')";
+    return IADOCJdbcTemplate.update(SQL,new Object[]{
+            sectionReq.getSecCode(),
+            sectionReq.getSecDesc(),
+            sectionReq.getSecDescLao(),
+            sectionReq.getDeptCode()
+    });
+    }
+
+    public int saveSectionExcutive(SectionReq sectionReq) {
+        SQL="insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'2')";
     return IADOCJdbcTemplate.update(SQL,new Object[]{
             sectionReq.getSecCode(),
             sectionReq.getSecDesc(),
@@ -415,4 +548,33 @@ public class LoginImpl implements LoginDao{
                 sectionReq.getSecId()
         });
     }
+    @Override
+    public List<Login> CheckUser(DocumentReq documentReq) {
+        SQL="select * from V_LOGIN where USER_ID= '"+documentReq.getMarkerId()+"'";
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
+            @Override
+            public Login mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Login tr = new Login();
+                tr.setID(rs.getLong("ID"));
+                tr.setUserName(rs.getString("USER_NAME"));
+                tr.setPassWord(rs.getString("USERCHAR"));
+                tr.setToKen(rs.getString("token"));
+                tr.setUserId(rs.getString("USER_ID"));
+                tr.setGender(rs.getString("GENDER"));
+                tr.setDob(rs.getString("DOB"));
+                tr.setTypeDesc(rs.getString("TYPE_DESC"));
+                tr.setTypeDesLa(rs.getString("TYPE_DESC_LAO"));
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecDescEn(rs.getString("SEC_DESC"));
+                tr.setSecDescLa(rs.getString("SEC_DESC_LAO"));
+                tr.setUserStatus(rs.getString("USER_STATUS"));
+                tr.setFullNameEn(rs.getString("FULLNAME_EN"));
+                tr.setFullNameLa(rs.getString("FULLNAME_LA"));
+                return tr;
+            }
+        });
+      //  return null;
+    }
+
+
 }

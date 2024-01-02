@@ -1,4 +1,4 @@
-package com.ldb.iadoc.Model.Users.ComboUser;
+package com.ldb.iadoc.Model.Years;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ComboUserReq {
-    private String[] secCode;
-
+public class Years {
+    private String iD;
+    private String yearIn;
 }
