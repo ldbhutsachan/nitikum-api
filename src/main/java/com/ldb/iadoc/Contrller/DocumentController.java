@@ -7,6 +7,8 @@ import com.ldb.iadoc.Model.Document.DocumentReq;
 import com.ldb.iadoc.Model.Document.DocumentRes;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
 import com.ldb.iadoc.Model.Document.docSerachReq;
+import com.ldb.iadoc.Model.GroupHeaderReq;
+import com.ldb.iadoc.Model.GroupHeaderRes;
 import com.ldb.iadoc.Model.ReponeRes;
 import com.ldb.iadoc.Service.DocumentService;
 import com.ldb.iadoc.Service.MediaUploadServiceImpl;
@@ -36,6 +38,7 @@ public class DocumentController {
     @Autowired
     MediaUploadServiceImpl mediaUploadService;
 
+
     @CrossOrigin(origins = "*")
     @PostMapping("/Audit/getAuditListCheck")
     public DocumentAuditRes getAuditListCheck(@RequestBody DocumentReq documentReq){
@@ -62,6 +65,29 @@ public class DocumentController {
         result = documentService.getShareDocument(documentReq);
         return result;
     }
+    //----------------------------Report
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Share/getShareDocumentReport")
+    public GroupHeaderRes getShareDocumentReport(@RequestBody GroupHeaderReq documentReq){
+        log.info("====================================================>get Report controller<=========================");
+        System.out.println("getStartDate:"+documentReq.getStartDate());
+        System.out.println("getEndDate:"+documentReq.getEndDate());
+        System.out.println("getRelated:"+documentReq.getRelated_Name());
+        GroupHeaderRes result =new GroupHeaderRes();
+        result = documentService.getShareDocumentReport(documentReq);
+        return result;
+    }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Share/getShareDocumentReportText02")
+    public GroupHeaderRes getShareDocumentReportText02(@RequestBody GroupHeaderReq documentReq){
+        log.info("====================================================>get Report controller<=========================");
+        System.out.println("getStartDate:"+documentReq.getStartDate());
+        System.out.println("getEndDate:"+documentReq.getEndDate());
+        System.out.println("getRelated:"+documentReq.getRelated_Name());
+        GroupHeaderRes result =new GroupHeaderRes();
+        result = documentService.getShareDocumentReportText02(documentReq);
+        return result;
+    }
     //===============================================================> get data show meeting <===============================
     @CrossOrigin(origins = "*")
     @PostMapping("/Search/getShareDocumentByCondition")
@@ -83,10 +109,19 @@ public class DocumentController {
         result = documentService.getShareDocumentByConditionText(docSerachReq);
         return result;
     }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Search/getShareDocumentByConditionTextByTextSearch")
+    public DocumentAuditRes getShareDocumentByConditionTextByTextSearch(@RequestBody docSerachReq docSerachReq){
+        log.info("====================================================>getShareDocumentByConditionText controller<=========================");
+        System.out.println("getIdYear:"+docSerachReq.getTextSearch());
+        DocumentAuditRes result =new DocumentAuditRes();
+        result = documentService.getShareDocumentByConditionText(docSerachReq);
+        return result;
+    }
 
     //===================read data ReadDoc=============
     @CrossOrigin(origins = "*")
-    @PostMapping("/Report/getReportDocument")
+    @PostMapping("/document/getReportDocument")
     public DocumentReportRes getReportDocument(@RequestBody DocumentReq documentReq) throws ParseException {
         log.info("====================================================>ReadData controller<=========================");
         DocumentReportRes result = new DocumentReportRes();
@@ -124,12 +159,15 @@ public class DocumentController {
                     @RequestParam("markerId") String markerId,
                     @RequestParam("sharingType") String sharingType,
                     @RequestParam("details") String details,
+                    @RequestParam("related_No") String related_No,
+                    @RequestParam("related_Name") String related_Name,
                     @RequestParam(value = "old_image1", required = false) String  old_image1,
                     @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
         log.info("====================================================>SaveDoc controller<=========================");
         log.info("show fileEn:"+filesEn);
         log.info("show fileLA:"+filesLao);
+        log.info("show related_No:"+related_No);
 
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
@@ -153,6 +191,8 @@ public class DocumentController {
             else if (details == "" || details.equals("")){
                 data.setDetails(a1);
             }
+            data.setRelated_No(related_No);
+            data.setRelated_Name(related_Name);
             data.setDocNo(docNo);
             data.setSubjectName(subjectName);
             data.setDocDate(docDate);
@@ -192,36 +232,6 @@ public class DocumentController {
                 fileNameLa = StringUtils.join(fileNamesLa, ',');
                 data.setDocPathLa(fileNameLa);
             }
-//                List<String> fileNamesEns = new ArrayList<>();
-//                if(filesLao == null){
-//                    log.warn("************* file name is null ****************");
-//                    data.setDocPathLa(old_image2);
-//                }else {
-//                    Arrays.asList(filesLao).stream().forEach(file -> {
-//                        //filesStorageService.save(file);
-//                        fileNamesEns.add(mediaUploadService.uploadDirectoryDocLa(file));
-//                    });
-//                    log.info("Uploaded the files successfully: " + fileNamesEns );
-//                    fileNamesEns.add(old_image2);
-//
-//                    fileNameEn = StringUtils.join(fileNamesEns, ',');
-//                    data.setDocPathLa(fileNameEn);
-//                }
-//            List<String> fileNamesLas = new ArrayList<>();
-//            if(filesLao == null){
-//                log.warn("************* file name is null ****************");
-//                data.setDocPathLa(old_image2);
-//            }else {
-//                Arrays.asList(filesLao).stream().forEach(file -> {
-//                    //filesStorageService.save(file);
-//                    fileNamesLas.add(mediaUploadService.uploadDirectoryDocLa(file));
-//                });
-//                log.info("Uploaded the files successfully: " + fileNamesLas );
-//                fileNamesLas.add(old_image2);
-//
-//                fileNameLa = StringUtils.join(fileNamesLas, ',');
-//                data.setDocPathLa(fileNameLa);
-//            }
             result = documentService.SaveDocument(data);
         }catch (Exception e){
             if (e instanceof NullPointerException) {
@@ -265,9 +275,20 @@ public class DocumentController {
     public DocumentAuditRes getShareDocumentDoctype(@RequestBody DocumentReq documentReq){
         log.info("====================================================>getShareDocumentDoctype controller<=========================");
         System.out.println("getMarkerId:"+documentReq.getMarkerId());
-        System.out.println("getDocType:"+documentReq.getDocType());
+        System.out.println("getDocType:"+documentReq.getDocNo());
         DocumentAuditRes result =new DocumentAuditRes();
         result = documentService.getShareDocumentDoctype(documentReq);
         return result;
     }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Share/ReadyDoc")
+    public ReponeRes ReadDoc(@RequestBody DocumentReq documentReq){
+        log.info("====================================================>getShareDocumentDoctype controller<=========================");
+        System.out.println("getReadBy:"+documentReq.getReadBy());
+        System.out.println("getId:"+documentReq.getId());
+        ReponeRes result =new ReponeRes();
+        result = documentService.ReadDoc(documentReq);
+        return result;
+    }
+
 }

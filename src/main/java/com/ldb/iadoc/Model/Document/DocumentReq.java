@@ -18,6 +18,8 @@ public class DocumentReq {
     private String taiMard;
     private String yearIn;
     private String docNo;
+    private String related_No;
+    private String related_Name;
     private String subjectName;
     private String docDate;
     private String docType;
@@ -37,11 +39,15 @@ public class DocumentReq {
     private String details;
 
     private String rejectBy;
+    private String readBy;
     private String rejectDate;
 
     private String userType;
 
     private String startDate;
     private String endDate;
+
+
+    private String docConnect;
 
 }

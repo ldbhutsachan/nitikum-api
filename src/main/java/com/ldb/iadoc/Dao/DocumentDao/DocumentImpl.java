@@ -5,6 +5,7 @@ import com.ldb.iadoc.Model.Document.Document;
 import com.ldb.iadoc.Model.Document.DocumentAudit;
 import com.ldb.iadoc.Model.Document.DocumentReq;
 import com.ldb.iadoc.Model.Document.docSerachReq;
+import com.ldb.iadoc.Model.GroupHeaderReq;
 import com.ldb.iadoc.Model.Share.ShareReq;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,7 +81,6 @@ public class DocumentImpl implements DocumentDao {
         String str = ListBranch;
         String trimmedStr = str.substring(0, str.length() - 0);
         String[] bandArray = trimmedStr.split(",");
-
         System.out.println("show array:"+Arrays.toString(bandArray));
         SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE,SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
         for (String branch : bandArray) {
@@ -88,6 +88,49 @@ public class DocumentImpl implements DocumentDao {
                     documentReq.getDocNo(),
                     branch,
                     documentReq.getSharingType());
+        }
+        return 1;
+    }
+    public int DOC_CREATE_TEMP(DocumentReq documentReq){
+        log.info("==========share data to User==========");
+        String ListBranch = documentReq.getRelated_No();
+        String str = ListBranch;
+        String trimmedStr = str.substring(0, str.length() - 0);
+        String[] bandArray = trimmedStr.split(",");
+        System.out.println("show array 99960:"+Arrays.toString(bandArray));
+        log.info("show:"+documentReq.getDocDate());
+        SQL="insert into DOC_CREATE_TEMP (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,type,RELETED_NO) " +
+                "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?)";
+        for (String branch : bandArray) {
+            IADOCJdbcTemplate.update(SQL,
+                    documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
+                    documentReq.getDocNo(), //ລະຫັດເອກະສານ
+                    documentReq.getDocType(), //ປະເພດເອກະສານ
+                    documentReq.getDocDate(), //ເອກະສານລົງວັນທີ່
+                    documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
+                    //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
+                    documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
+                    documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
+                    documentReq.getMarkerId(),//ຜູ້ສ້າງ
+                    documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
+                    documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
+                    branch
+            );
+        }
+        return -1;
+    }
+    public int saveRedNo(DocumentReq documentReq){
+        log.info("==========share data to User==========");
+        String ListBranch = documentReq.getRelated_No();
+        String str = ListBranch;
+        String trimmedStr = str.substring(0, str.length() - 0);
+        String[] bandArray = trimmedStr.split(",");
+        System.out.println("show array 999:"+Arrays.toString(bandArray));
+        SQL="insert into RELATED (SECTION_CODE) values(?)";
+        for (String branch : bandArray) {
+            IADOCJdbcTemplate.update(SQL,
+                    branch
+            );
         }
         return 1;
     }
@@ -103,16 +146,26 @@ public class DocumentImpl implements DocumentDao {
     }
     @Override
     public int ReadData(DocumentReq documentReq) {
-        SQL="update DOC_SHARING set SES_STATUS='R',READ_DATE=sysdate where DOC_TYPE=?";
+        SQL="update DOC_SHARING set SES_STATUS='R',READBYDATE=sysdate,READBY=? where id=?";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
-                documentReq.getDocNo()
+                documentReq.getReadBy(),
+                documentReq.getId()
+
+        });
+    }
+    public int ReadDataState(DocumentReq documentReq) {
+        SQL="insert into TB_READ_STATE (USER_READ,SHARE_ID,DATE_READ) values (?,?,syadte)";
+        return IADOCJdbcTemplate.update(SQL,new Object[]{
+                documentReq.getReadBy(),
+                documentReq.getId()
+
         });
     }
     @Override
     public int SaveDocument(DocumentReq documentReq) throws ParseException {
      log.info("show:"+documentReq.getDocDate());
-        SQL="insert into DOC_CREATE (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,type) " +
-                "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1')";
+        SQL="insert into DOC_CREATE (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,type,RELETED_NAME) " +
+                "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
                 documentReq.getDocNo(), //ລະຫັດເອກະສານ
@@ -125,6 +178,7 @@ public class DocumentImpl implements DocumentDao {
                 documentReq.getMarkerId(),//ຜູ້ສ້າງ
                 documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
                 documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
+                documentReq.getRelated_Name()
         });
     }
     @Override
@@ -267,6 +321,8 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+               // tr.setRelated_No(rs.getString("SECTION_CODE"));
+                tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));
@@ -359,6 +415,152 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setRelated_Name(rs.getString("RELETED_NAME"));
+                tr.setConnects(rs.getString("connects"));
+                tr.setTaiMard(rs.getString("taimard"));
+                tr.setYearIn(rs.getString("years"));
+                tr.setTaiMardDes(rs.getString("taimard"));
+                tr.setYearInDes(rs.getString("years"));
+                tr.setId(rs.getString("ID"));
+                tr.setSubjectName(rs.getString("SubjectName"));
+                tr.setApproveDate(rs.getString("APPROVE_DATE"));
+                tr.setDocNo(rs.getString("DOC_NO"));
+                tr.setSubjectName(rs.getString("SubjectName"));
+                tr.setRelated(rs.getString("RELATED"));
+                tr.setDepDescEN(rs.getString("DEPT_DESC_EN"));
+                tr.setDepDescLAO(rs.getString("DEPT_DESC_LAO"));
+                tr.setDocPath(rs.getString("DOC_PATH"));
+                tr.setCreateDate(rs.getString("CREATED_DATE"));
+                tr.setMarkerId(rs.getString("MAKER_ID"));
+                tr.setUserName(rs.getString("USER_NAME"));
+                tr.setDocType(rs.getString("DOC_TYPE"));
+                tr.setDocDescEn(rs.getString("DOC_DESC"));
+                tr.setDocDescLao(rs.getString("DOC_DESC_LAO"));
+                tr.setDocStatus(rs.getString("SES_STATUS"));
+                tr.setSharingType(rs.getString("SHARING_TYPE"));
+                tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
+                tr.setDocDate(rs.getString("DOC_DATE"));
+                tr.setCreateBy(rs.getString("createBy"));
+               // tr.setStatus(rs.getString("status"));
+                return tr;
+            }
+        });
+    }
+    public List<DocumentAudit> getShareDocumentReport(GroupHeaderReq documentReq) {
+        if(documentReq.getStartDate() == null  && documentReq.getRelated_Name().equals("0")){
+            SQL="select * from V_DOCUMENT_FOR_ADMIN order by ID asc";
+            log.info("SQL 01:"+SQL);
+        }
+        else if(documentReq.getStartDate()== null   && !documentReq.getRelated_Name().equals("0")){
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME='"+documentReq.getRelated_Name()+"' order by ID asc";
+            log.info("SQL 02:"+SQL);
+        }
+        else if(documentReq.getStartDate()!= null  && !documentReq.getRelated_Name().equals("0") ){
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME='"+documentReq.getRelated_Name()+"' and DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"'  order by ID asc";
+            log.info("SQL 03:"+SQL);
+        }
+        else if(documentReq.getStartDate() != null  && documentReq.getRelated_Name().equals("0")){
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"' order by ID asc";
+            log.info("SQL 04:"+SQL);
+        }
+
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
+            @Override
+            public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
+                DocumentAudit tr = new DocumentAudit();
+                tr.setRelated_Name(rs.getString("RELETED_NAME"));
+                tr.setConnects(rs.getString("connects"));
+                tr.setTaiMard(rs.getString("taimard"));
+                tr.setYearIn(rs.getString("years"));
+                tr.setTaiMardDes(rs.getString("taimard"));
+                tr.setYearInDes(rs.getString("years"));
+                tr.setId(rs.getString("ID"));
+                tr.setSubjectName(rs.getString("SubjectName"));
+                tr.setApproveDate(rs.getString("APPROVE_DATE"));
+                tr.setDocNo(rs.getString("DOC_NO"));
+                tr.setSubjectName(rs.getString("SubjectName"));
+                tr.setRelated(rs.getString("RELATED"));
+                tr.setDepDescEN(rs.getString("DEPT_DESC_EN"));
+                tr.setDepDescLAO(rs.getString("DEPT_DESC_LAO"));
+                tr.setDocPath(rs.getString("DOC_PATH"));
+                tr.setCreateDate(rs.getString("CREATED_DATE"));
+                tr.setMarkerId(rs.getString("MAKER_ID"));
+                tr.setUserName(rs.getString("USER_NAME"));
+                tr.setDocType(rs.getString("DOC_TYPE"));
+                tr.setDocDescEn(rs.getString("DOC_DESC"));
+                tr.setDocDescLao(rs.getString("DOC_DESC_LAO"));
+                tr.setDocStatus(rs.getString("SES_STATUS"));
+                tr.setSharingType(rs.getString("SHARING_TYPE"));
+                tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
+                tr.setDocDate(rs.getString("DOC_DATE"));
+                tr.setCreateBy(rs.getString("createBy"));
+               // tr.setStatus(rs.getString("status"));
+                return tr;
+            }
+        });
+    }
+    public List<DocumentAudit> getShareDocumentReportByText(GroupHeaderReq documentReq) {
+            SQL="select * from V_DOCUMENT_FOR_ADMIN  where DOC_NO like '%"+documentReq.getTextSearch()+"%' \n" +
+                    "or SUBJECTNAME like '%"+documentReq.getTextSearch()+"%'  \n" +
+                    "or DOC_DESC_LAO like '%"+documentReq.getTextSearch()+"%'  order by ID asc";
+            log.info("SQL 01:"+SQL);
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
+            @Override
+            public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
+                DocumentAudit tr = new DocumentAudit();
+                tr.setRelated_Name(rs.getString("RELETED_NAME"));
+                tr.setConnects(rs.getString("connects"));
+                tr.setTaiMard(rs.getString("taimard"));
+                tr.setYearIn(rs.getString("years"));
+                tr.setTaiMardDes(rs.getString("taimard"));
+                tr.setYearInDes(rs.getString("years"));
+                tr.setId(rs.getString("ID"));
+                tr.setSubjectName(rs.getString("SubjectName"));
+                tr.setApproveDate(rs.getString("APPROVE_DATE"));
+                tr.setDocNo(rs.getString("DOC_NO"));
+                tr.setSubjectName(rs.getString("SubjectName"));
+                tr.setRelated(rs.getString("RELATED"));
+                tr.setDepDescEN(rs.getString("DEPT_DESC_EN"));
+                tr.setDepDescLAO(rs.getString("DEPT_DESC_LAO"));
+                tr.setDocPath(rs.getString("DOC_PATH"));
+                tr.setCreateDate(rs.getString("CREATED_DATE"));
+                tr.setMarkerId(rs.getString("MAKER_ID"));
+                tr.setUserName(rs.getString("USER_NAME"));
+                tr.setDocType(rs.getString("DOC_TYPE"));
+                tr.setDocDescEn(rs.getString("DOC_DESC"));
+                tr.setDocDescLao(rs.getString("DOC_DESC_LAO"));
+                tr.setDocStatus(rs.getString("SES_STATUS"));
+                tr.setSharingType(rs.getString("SHARING_TYPE"));
+                tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
+                tr.setDocDate(rs.getString("DOC_DATE"));
+                tr.setCreateBy(rs.getString("createBy"));
+               // tr.setStatus(rs.getString("status"));
+                return tr;
+            }
+        });
+    } public List<DocumentAudit> getShareDocumentReport(DocumentReq documentReq) {
+        String userType= documentReq.getUserType();
+        if(userType.equals("A")){
+            log.info("userType:"+documentReq.getUserType());
+            SQL="select * from V_DOCUMENT_FOR_ADMIN order by ID asc";
+            log.info("SQL:"+SQL);
+        }else if(userType.equals("M")){
+            log.info("userType:"+documentReq.getUserType());
+            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+        }
+        else if(userType.equals("U")){
+            log.info("userType:"+documentReq.getUserType());
+            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+        }
+        else {
+            log.info("userType:"+documentReq.getUserType());
+            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+        }
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
+            @Override
+            public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
+                DocumentAudit tr = new DocumentAudit();
+                tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));
@@ -451,23 +653,24 @@ public class DocumentImpl implements DocumentDao {
         String userType= documentReq.getUserType();
         if(userType.equals("A")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where SEC_CODE= '"+documentReq.getSecCode()+"'  order by ID asc";
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+documentReq.getSecCode()+"%'  order by ID asc";
         }else if(userType.equals("M")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT where SEC_CODE= '"+documentReq.getSecCode()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+            SQL="select * from V_DOCUMENT where RELETED_NAME like '%"+documentReq.getSecCode()+"%' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
         }
         else if(userType.equals("U")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT where SEC_CODE= '"+documentReq.getSecCode()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+            SQL="select * from V_DOCUMENT where RELETED_NAME like '%"+documentReq.getSecCode()+"%' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
         }
         else {
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT where SEC_CODE= '"+documentReq.getSecCode()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+            SQL="select * from V_DOCUMENT where RELETED_NAME like '%"+documentReq.getSecCode()+"%' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));

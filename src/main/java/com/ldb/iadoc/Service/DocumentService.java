@@ -1,21 +1,20 @@
 package com.ldb.iadoc.Service;
 
-import com.ldb.iadoc.Contrller.LoginController;
 import com.ldb.iadoc.Dao.DocumentDao.DocumentImpl;
 import com.ldb.iadoc.Dao.Login.LoginImpl;
 import com.ldb.iadoc.Mesage.Constant;
 import com.ldb.iadoc.Mesage.Message;
 import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
-import com.ldb.iadoc.Model.Document.Report.groupDocType;
+import com.ldb.iadoc.Model.GroupHeaderReq;
+import com.ldb.iadoc.Model.GroupHeaderRes;
 import com.ldb.iadoc.Model.Login.Login;
-import com.ldb.iadoc.Model.Login.LoginRes;
 import com.ldb.iadoc.Model.ReponeRes;
+import com.ldb.iadoc.Model.GroupHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentService {
@@ -45,15 +45,19 @@ public class DocumentService {
             String outputDateStr = outputDateFormat.format(inputDate);
             documentReq.setDocDate(outputDateStr);
         }
-
          if(documentReq.getSharingType().equals("V")){
             log.info("User:"+documentReq.getSharingType());
              check= documentImpl.SaveDocument(documentReq);
             checkSharing= documentImpl.saveSharingDoBranch(documentReq);
+            //********************insert section for share by array data *******************
+            documentImpl.saveRedNo(documentReq);
+            documentImpl.DOC_CREATE_TEMP(documentReq);
         }else {
              check= documentImpl.SaveDocument(documentReq);
-
              checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq);
+             //********************insert section for share by array data *******************
+             documentImpl.saveRedNo(documentReq);
+             documentImpl.DOC_CREATE_TEMP(documentReq);
              log.info("*********************** :no array: ************************");
          }
         try {
@@ -265,13 +269,259 @@ public class DocumentService {
         }
         return result;
     }
+    public GroupHeaderRes getShareDocumentReport(GroupHeaderReq documentReq){
+        Message message = new Message();
+        GroupHeaderRes result = new GroupHeaderRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+            listData = documentImpl.getShareDocumentReport(documentReq);
+        List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
+        GroupHeader groupHeader = new GroupHeader();
+        List<GroupHeader> headers = new ArrayList<>();
+        List<DocumentAudit> resDataItems = new ArrayList<>();
+        for (String reNo : refIds){
+            groupHeader = new GroupHeader();
+            groupHeader.setRelated_Name(listData.stream().filter(p -> p.getRelated_Name().equals(reNo)).map(DocumentAudit::getRelated_Name).findFirst().orElse(""));
+            headers.add(groupHeader);
+            resDataItems = new ArrayList<>();
+            for (DocumentAudit rspList : listData) {
+                if(rspList.getRelated_Name().equals(reNo)) {
+                    DocumentAudit rsShow = new DocumentAudit();
+                    rsShow.setRelated_Name(rspList.getRelated_Name());
+                    rsShow.setConnects(rspList.getConnects());
+                    rsShow.setTaiMard(rspList.getTaiMard());
+                    rsShow.setYearIn(rspList.getYearIn());
+                    rsShow.setTaiMardDes(rspList.getTaiMardDes());
+                    rsShow.setYearInDes(rspList.getYearInDes());
+                    rsShow.setId(rspList.getId());
+                    rsShow.setSubjectName(rspList.getSubjectName());
+                    rsShow.setApproveDate(rspList.getApproveDate());
+                    rsShow.setDocNo(rspList.getDocNo());
+                    rsShow.setSubjectName(rspList.getSubjectName());
+                    rsShow.setRelated(rspList.getRelated());
+                    rsShow.setDepDescEN(rspList.getDepDescEN());
+                    rsShow.setDepDescLAO(rspList.getDepDescLAO());
+                    rsShow.setDocPath(rspList.getDocPath());
+                    rsShow.setCreateDate(rspList.getCreateDate());
+                    rsShow.setMarkerId(rspList.getMarkerId());
+                    rsShow.setUserName(rspList.getUserName());
+                    rsShow.setDocType(rspList.getDocType());
+                    rsShow.setDocDescEn(rspList.getDocDescEn());
+                    rsShow.setDocDescLao(rspList.getDocDescLao());
+                    rsShow.setDocStatus(rspList.getDocStatus());
+                    rsShow.setSharingType(rspList.getSharingType());
+                    rsShow.setDocPathLa(rspList.getDocPathLa());
+                    rsShow.setDocDate(rspList.getDocDate());
+                    rsShow.setCreateBy(rspList.getCreateBy());
+                    resDataItems.add(rsShow);
+                }
+            }
+            groupHeader.setDetails(resDataItems);
+        }
+        try {
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setGroupHeader(headers);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setGroupHeader(headers);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public GroupHeaderRes getShareDocumentReportText(GroupHeaderReq documentReq){
+        Message message = new Message();
+        GroupHeaderRes result = new GroupHeaderRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        listData = documentImpl.getShareDocumentReport(documentReq);
+        List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
+        GroupHeader groupHeader = new GroupHeader();
+        List<GroupHeader> headers = new ArrayList<>();
+        List<DocumentAudit> resDataItems = new ArrayList<>();
+        for (String reNo : refIds){
+            groupHeader = new GroupHeader();
+            groupHeader.setRelated_Name(listData.stream().filter(p -> p.getRelated_Name().equals(reNo)).map(DocumentAudit::getRelated_Name).findFirst().orElse(""));
+            headers.add(groupHeader);
+            resDataItems = new ArrayList<>();
+            for (DocumentAudit rspList : listData) {
+                if(rspList.getRelated_Name().equals(reNo)) {
+                    DocumentAudit rsShow = new DocumentAudit();
+                    rsShow.setRelated_Name(rspList.getRelated_Name());
+                    rsShow.setConnects(rspList.getConnects());
+                    rsShow.setTaiMard(rspList.getTaiMard());
+                    rsShow.setYearIn(rspList.getYearIn());
+                    rsShow.setTaiMardDes(rspList.getTaiMardDes());
+                    rsShow.setYearInDes(rspList.getYearInDes());
+                    rsShow.setId(rspList.getId());
+                    rsShow.setSubjectName(rspList.getSubjectName());
+                    rsShow.setApproveDate(rspList.getApproveDate());
+                    rsShow.setDocNo(rspList.getDocNo());
+                    rsShow.setSubjectName(rspList.getSubjectName());
+                    rsShow.setRelated(rspList.getRelated());
+                    rsShow.setDepDescEN(rspList.getDepDescEN());
+                    rsShow.setDepDescLAO(rspList.getDepDescLAO());
+                    rsShow.setDocPath(rspList.getDocPath());
+                    rsShow.setCreateDate(rspList.getCreateDate());
+                    rsShow.setMarkerId(rspList.getMarkerId());
+                    rsShow.setUserName(rspList.getUserName());
+                    rsShow.setDocType(rspList.getDocType());
+                    rsShow.setDocDescEn(rspList.getDocDescEn());
+                    rsShow.setDocDescLao(rspList.getDocDescLao());
+                    rsShow.setDocStatus(rspList.getDocStatus());
+                    rsShow.setSharingType(rspList.getSharingType());
+                    rsShow.setDocPathLa(rspList.getDocPathLa());
+                    rsShow.setDocDate(rspList.getDocDate());
+                    rsShow.setCreateBy(rspList.getCreateBy());
+                    resDataItems.add(rsShow);
+                }
+            }
+            groupHeader.setDetails(resDataItems);
+        }
+        try {
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setGroupHeader(headers);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setGroupHeader(headers);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+    //****************
+    public GroupHeaderRes getShareDocumentReportText02(GroupHeaderReq documentReq){
+        Message message = new Message();
+        GroupHeaderRes result = new GroupHeaderRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        listData = documentImpl.getShareDocumentReportByText(documentReq);
+        List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
+        GroupHeader groupHeader = new GroupHeader();
+        List<GroupHeader> headers = new ArrayList<>();
+        List<DocumentAudit> resDataItems = new ArrayList<>();
+        for (String reNo : refIds){
+            groupHeader = new GroupHeader();
+            groupHeader.setRelated_Name(listData.stream().filter(p -> p.getRelated_Name().equals(reNo)).map(DocumentAudit::getRelated_Name).findFirst().orElse(""));
+            headers.add(groupHeader);
+            resDataItems = new ArrayList<>();
+            for (DocumentAudit rspList : listData) {
+                if(rspList.getRelated_Name().equals(reNo)) {
+                    DocumentAudit rsShow = new DocumentAudit();
+                    rsShow.setRelated_Name(rspList.getRelated_Name());
+                    rsShow.setConnects(rspList.getConnects());
+                    rsShow.setTaiMard(rspList.getTaiMard());
+                    rsShow.setYearIn(rspList.getYearIn());
+                    rsShow.setTaiMardDes(rspList.getTaiMardDes());
+                    rsShow.setYearInDes(rspList.getYearInDes());
+                    rsShow.setId(rspList.getId());
+                    rsShow.setSubjectName(rspList.getSubjectName());
+                    rsShow.setApproveDate(rspList.getApproveDate());
+                    rsShow.setDocNo(rspList.getDocNo());
+                    rsShow.setSubjectName(rspList.getSubjectName());
+                    rsShow.setRelated(rspList.getRelated());
+                    rsShow.setDepDescEN(rspList.getDepDescEN());
+                    rsShow.setDepDescLAO(rspList.getDepDescLAO());
+                    rsShow.setDocPath(rspList.getDocPath());
+                    rsShow.setCreateDate(rspList.getCreateDate());
+                    rsShow.setMarkerId(rspList.getMarkerId());
+                    rsShow.setUserName(rspList.getUserName());
+                    rsShow.setDocType(rspList.getDocType());
+                    rsShow.setDocDescEn(rspList.getDocDescEn());
+                    rsShow.setDocDescLao(rspList.getDocDescLao());
+                    rsShow.setDocStatus(rspList.getDocStatus());
+                    rsShow.setSharingType(rspList.getSharingType());
+                    rsShow.setDocPathLa(rspList.getDocPathLa());
+                    rsShow.setDocDate(rspList.getDocDate());
+                    rsShow.setCreateBy(rspList.getCreateBy());
+                    resDataItems.add(rsShow);
+                }
+            }
+            groupHeader.setDetails(resDataItems);
+        }
+        try {
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setGroupHeader(headers);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setGroupHeader(headers);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
     public DocumentAuditRes getShareDocument(DocumentReq documentReq){
         Message message = new Message();
         DocumentAuditRes result = new DocumentAuditRes();
         List<DocumentAudit> listData = new ArrayList<>();
         List<DocumentAudit> listData2 = new ArrayList<>();
         List<Login> getCheckUserList = loginService.CheckUser(documentReq);
-        documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
+        log.info("show:"+getCheckUserList.size());
+        if(getCheckUserList.size() < 0 ){
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgUserError);
+            result.setMessage(message);
+            return result;
+        }else {
+            documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
+        }
         listData = documentImpl.getShareDocument(documentReq);
         try {
             if (listData.size() > 0) {

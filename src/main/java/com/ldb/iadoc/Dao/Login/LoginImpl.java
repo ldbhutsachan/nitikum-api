@@ -430,13 +430,12 @@ public class LoginImpl implements LoginDao{
     @Override
     public List<Branch> getBranch(BranchReq branchReq) {
         if(branchReq.getBranchCode() == null || branchReq.getBranchCode() == ""){
-            SQL="select * from BRANCH order by ID asc";
+            SQL="select * from BRANCH where  type='1' order by ID asc";
             System.out.println("SQL:"+SQL);
         }else {
-            SQL="select * from BRANCH where BRANCH_CODE='"+branchReq.getBranchCode() +"' order by ID asc";
+            SQL="select * from BRANCH where BRANCH_CODE='"+branchReq.getBranchCode() +"' and  type='1' order by ID asc";
             System.out.println("SQL:"+SQL);
         }
-
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Branch>() {
             @Override
             public Branch mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -521,9 +520,10 @@ public class LoginImpl implements LoginDao{
     }
 
     public int saveSectionExcutive(SectionReq sectionReq) {
+        String secCode="90901";
         SQL="insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'2')";
     return IADOCJdbcTemplate.update(SQL,new Object[]{
-            sectionReq.getSecCode(),
+            secCode,
             sectionReq.getSecDesc(),
             sectionReq.getSecDescLao(),
             sectionReq.getDeptCode()

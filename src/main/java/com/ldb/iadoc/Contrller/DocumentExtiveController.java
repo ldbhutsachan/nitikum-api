@@ -62,8 +62,8 @@ public class DocumentExtiveController {
     @CrossOrigin(origins = "*")
     @PostMapping(value = "/Document/SaveDocExcutive" , consumes = {"multipart/form-data"})
     public ReponeRes SaveDoc(
-            @RequestParam("filesEn") MultipartFile filesEn,
-            @RequestParam("filesLao") MultipartFile filesLao,
+            @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
+            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
             @RequestParam("docNo") String docNo,
             @RequestParam("subjectName") String subjectName,
             @RequestParam("docDate") String docDate,
@@ -77,7 +77,9 @@ public class DocumentExtiveController {
             @RequestParam("taiMard") String taiMard,
             @RequestParam("yearIn") String yearIn,
             @RequestParam("conName") String conName,
-            @RequestParam("conName2") String conName2
+            @RequestParam("conName2") String conName2,
+            @RequestParam(value = "old_image1", required = false) String  old_image1,
+            @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
         log.info("====================================================>SaveDoc controller<=========================");
         Date date = new Date();
@@ -107,7 +109,7 @@ public class DocumentExtiveController {
             //==========================ກວດສອບ ໄຟທີ 1==================================
             if(filesEn == null){
                 log.warn("************* file EN is null ****************");
-                data.setDocPath("");
+                data.setDocPath(old_image1);
             }
             else if(filesEn != null) {
                 Arrays.asList(filesEn).stream().forEach(file -> {
@@ -117,10 +119,10 @@ public class DocumentExtiveController {
                 fileNameEn = StringUtils.join(fileNamesEn, ',');
                 data.setDocPath(fileNameEn);
             }
-            //==========================ກວດສອບ ໄຟທີ 2==================================
+            //   ==========================ກວດສອບ ໄຟທີ 2==================================
             if(filesLao == null ){
                 log.warn("************* file LAO is null ****************");
-                data.setDocPathLa("");
+                data.setDocPathLa(old_image2);
             }else if(filesLao != null){
                 log.warn("************* file LAO no null ****************");
                 Arrays.asList(filesLao).stream().forEach(file -> {
@@ -151,6 +153,7 @@ public class DocumentExtiveController {
     public ReponeRes updateDoc(
 
             @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
+            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
             @RequestParam("docNo") String docNo,
             @RequestParam("subjectName") String subjectName,
             @RequestParam("docDate") String docDate,
@@ -165,7 +168,8 @@ public class DocumentExtiveController {
             @RequestParam("yearIn") String yearIn,
             @RequestParam("conName") String conName,
             @RequestParam("id") String id,
-            @RequestParam(value = "old_image", required = false) String  old_image
+            @RequestParam(value = "old_image1", required = false) String  old_image1,
+            @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
         log.info("====================================================>UPDATE controller<=========================");
         Date date = new Date();
@@ -190,27 +194,34 @@ public class DocumentExtiveController {
             data.setDetails(details);
             data.setConName(conName);
             data.setId(id);
+            String fileNameEn = "";
             String fileNameLa = "";
+            List<String> fileNamesEn = new ArrayList<>();
             List<String> fileNamesLa = new ArrayList<>();
-            log.warn("************* file LAO is null ****************"+filesLao);
-            //************************
-            log.error("******file lenght"+filesLao);
-            log.error(old_image);
-            String fileName = "";
-            List<String> fileNames = new ArrayList<>();
-            if(filesLao == null){
-                log.warn("************* file name is null ****************");
-                data.setDocPathLa(old_image);
-            }else {
-                Arrays.asList(filesLao).stream().forEach(file -> {
-                    //filesStorageService.save(file);
-                    fileNames.add(mediaUploadService.uploadDirectoryDocLa(file));
+            //==========================ກວດສອບ ໄຟທີ 1==================================
+            if(filesEn == null){
+                log.warn("************* file EN is null ****************");
+                data.setDocPath(old_image1);
+            }
+            else if(filesEn != null) {
+                Arrays.asList(filesEn).stream().forEach(file -> {
+                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
                 });
-                log.info("Uploaded the files successfully: " + fileNames );
-                fileNames.add(old_image);
-
-                fileName = StringUtils.join(fileNames, ',');
-                data.setDocPathLa(fileName);
+                log.info("Uploaded the files successfully: "+ fileNamesEn);
+                fileNameEn = StringUtils.join(fileNamesEn, ',');
+                data.setDocPath(fileNameEn);
+            }
+            //   ==========================ກວດສອບ ໄຟທີ 2==================================
+            if(filesLao == null ){
+                log.warn("************* file LAO is null ****************");
+                data.setDocPathLa(old_image2);
+            }else if(filesLao != null){
+                log.warn("************* file LAO no null ****************");
+                Arrays.asList(filesLao).stream().forEach(file -> {
+                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
+                });
+                fileNameLa = StringUtils.join(fileNamesLa, ',');
+                data.setDocPathLa(fileNameLa);
             }
             result = documentService.updateDocExcutive(data);
         }catch (Exception e){

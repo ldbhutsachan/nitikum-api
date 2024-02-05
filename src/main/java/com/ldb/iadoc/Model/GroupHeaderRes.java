@@ -1,21 +1,17 @@
-package com.ldb.iadoc.Model.Document;
+package com.ldb.iadoc.Model;
 
 import com.ldb.iadoc.Mesage.Message;
-import com.ldb.iadoc.Model.GroupHeader;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
-
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class DocumentAuditRes {
-private Message message;
-List<DocumentAudit> resData;
-
-   // private List<GroupHeader> groupHeader;
+public class GroupHeaderRes {
+    private Message message;
+    private List<GroupHeader> groupHeader;
 }

@@ -23,6 +23,8 @@ public class DocumentAudit {
     private String docType;
     private String subjectName;
     private String related;
+    private String related_No;
+    private String related_Name;
     private String docStatus;
     private String docPath;
     private String createDate;
