@@ -261,7 +261,7 @@ public class DocumentImpl implements DocumentDao {
 
     @Override
     public int DelDocument(DocumentReq documentReq) {
-        SQL="update  DOC_CREATE set DELETE_BY=?,DELETE_DATE=sysdate,DOC_STATUS='D'  where id=?";
+        SQL="delete from  DOC_CREATE  where id=?";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 documentReq.getDeleteId(),
                 documentReq.getId()
@@ -316,7 +316,7 @@ public class DocumentImpl implements DocumentDao {
     }
     @Override
     public List<DocumentAudit> getWaitListCheckByUser(DocumentReq documentReq) {
-        SQL="select * from V_AUDIT_CHECK where type='1' and MAKER_ID='"+documentReq.getMarkerId()+"' order by ID asc";
+        SQL="select * from V_WAIT_DOCUMENT_LAW where type='1' and MAKER_ID='"+documentReq.getMarkerId()+"' order by ID asc";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
