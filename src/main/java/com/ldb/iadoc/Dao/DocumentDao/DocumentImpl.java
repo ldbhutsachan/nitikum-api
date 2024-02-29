@@ -261,9 +261,8 @@ public class DocumentImpl implements DocumentDao {
 
     @Override
     public int DelDocument(DocumentReq documentReq) {
-        SQL="delete from  DOC_CREATE  where id=?";
+        SQL="delete from DOC_CREATE  where id=?";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
-                documentReq.getDeleteId(),
                 documentReq.getId()
         });
     }
