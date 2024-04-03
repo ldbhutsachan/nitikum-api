@@ -643,7 +643,6 @@ public class DocumentService {
         List<Login> getCheckUserList = loginService.CheckUser(documentReq);
         documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
         listData = documentImpl.getShareDocumentDoctype(documentReq);
-
         try {
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
