@@ -714,25 +714,25 @@ public class DocumentImpl implements DocumentDao {
         }else if(userType.equals("M")){
             log.info("userType:"+documentReq.getUserType());
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  order by ID asc";
             }else {
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' and RELETED_NAME like '%"+related+"%' order by ID asc";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  and RELETED_NAME like '%"+related+"%' order by ID asc";
             }
         }
         else if(userType.equals("U")){
             log.info("userType:"+documentReq.getUserType());
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' a order by ID asc";
             }else {
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where  RELETED_NAME like '%"+related+"%' and DOC_TYPE ='"+documentReq.getDocType()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where  RELETED_NAME like '%"+related+"%' and DOC_TYPE ='"+documentReq.getDocType()+"'  order by ID asc";
             }
         }
         else {
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  order by ID asc";
             }else {
                 log.info("userType:" + documentReq.getUserType());
-                SQL = "select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+related+"%' and DOC_TYPE ='" + documentReq.getDocType() + "' and USER_ALLOW ='" + documentReq.getMarkerId() + "' order by ID asc";
+                SQL = "select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+related+"%' and DOC_TYPE ='" + documentReq.getDocType() + "'  order by ID asc";
             }
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
