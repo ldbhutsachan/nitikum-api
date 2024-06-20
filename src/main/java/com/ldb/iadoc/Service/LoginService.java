@@ -79,6 +79,8 @@ public class LoginService {
                 return result;
             }
         }catch (Exception e){
+
+
             if (e instanceof NullPointerException) {
                 System.out.println("NullPointerException occurred");
             } else if (e instanceof IllegalArgumentException) {

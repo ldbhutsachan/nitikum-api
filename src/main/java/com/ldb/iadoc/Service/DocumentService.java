@@ -158,6 +158,40 @@ public class DocumentService {
         }
         return  result;
     }
+    public ReponeRes updateDocExcutiveNoFile(DocumentReq documentReq) throws ParseException {
+        ReponeRes result = new ReponeRes();
+        Message message = new Message();
+        int check = 0;
+        check= documentImpl.updateDocExcutiveNofile(documentReq);
+        try {
+            if (check > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgUpdate);
+                result.setMessage(message);
+                return result;
+            }else {
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgFailUpdate);
+                result.setMessage(message);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return  result;
+    }
     public DocumentAuditRes getAuditListCheck(DocumentReq documentReq){
         Message message = new Message();
         DocumentAuditRes result = new DocumentAuditRes();

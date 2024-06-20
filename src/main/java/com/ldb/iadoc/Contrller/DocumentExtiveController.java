@@ -199,11 +199,11 @@ public class DocumentExtiveController {
             List<String> fileNamesEn = new ArrayList<>();
             List<String> fileNamesLa = new ArrayList<>();
             //==========================ກວດສອບ ໄຟທີ 1==================================
-            if(filesEn == null){
+            if(filesEn == null || filesEn.length == 0 || filesEn.equals(null) || filesEn.equals("")){
                 log.warn("************* file EN is null ****************");
                 data.setDocPath(old_image1);
             }
-            else if(filesEn != null) {
+            else if(filesEn != null || filesEn.length != 0 || !filesEn.equals(null) || !filesEn.equals("")){
                 Arrays.asList(filesEn).stream().forEach(file -> {
                     fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
                 });
@@ -212,18 +212,20 @@ public class DocumentExtiveController {
                 data.setDocPath(fileNameEn);
             }
             //   ==========================ກວດສອບ ໄຟທີ 2==================================
-            if(filesLao == null ){
+            if(filesLao == null || filesLao.length == 0 || filesLao.equals(null) || filesLao.equals("")){
                 log.warn("************* file LAO is null ****************");
                 data.setDocPathLa(old_image2);
-            }else if(filesLao != null){
+                result = documentService.updateDocExcutiveNoFile(data);
+            }
+            else if(filesLao != null || filesLao.length != 0 || !filesLao.equals(null) || !filesLao.equals("")){
                 log.warn("************* file LAO no null ****************");
                 Arrays.asList(filesLao).stream().forEach(file -> {
                     fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
                 });
                 fileNameLa = StringUtils.join(fileNamesLa, ',');
                 data.setDocPathLa(fileNameLa);
+                result = documentService.updateDocExcutive(data);
             }
-            result = documentService.updateDocExcutive(data);
         }catch (Exception e){
             if (e instanceof NullPointerException) {
                 System.out.println("NullPointerException occurred");

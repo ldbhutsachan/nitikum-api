@@ -211,20 +211,15 @@ public class DocumentImpl implements DocumentDao {
     }
     @Override
     public int updateDocExcutive(DocumentReq documentReq) throws ParseException {
-//        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-//        Date doDate = sdf.parse(documentReq.getDocDate());
-//        java.sql.Date docDate = new java.sql.Date(doDate.getTime());
-//        log.info("shiw:"+documentReq.getDocPathLa());
-        log.info("lo:"+documentReq.getDocPathLa());
-        if(documentReq.getDocPathLa() == null || documentReq.getDocPathLa() == ""){
-            SQL="update DOC_CREATE set SUBJECTNAME=?,DOC_NO=?,DOC_TYPE=?,DOC_DATE=TO_DATE('"+documentReq.getDocDate()+"', 'DD/MM/YYYY'),RELATED=?,CREATED_DATE=sysdate," +
-                    "MAKER_ID=?,SHARING_TYPE=?,DETAILS=?,taimard=?,years=?,CONNECT_NAME=? where ID=?";
-            log.info("SQL1:"+SQL);
-        }else {
-            SQL="update DOC_CREATE set SUBJECTNAME=?,DOC_NO=?,DOC_TYPE=?,DOC_DATE=TO_DATE('"+documentReq.getDocDate()+"', 'DD/MM/YYYY'),RELATED=?,DOC_PATH_LA=?,CREATED_DATE=sysdate," +
+        String poEnd = documentReq.getDocDate();
+        SimpleDateFormat inputFormatEnd = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat outputFormatEnd = new SimpleDateFormat("dd-MMM-yy");
+        String outputDateEnd = outputFormatEnd.format(poEnd);
+
+            SQL="update DOC_CREATE set SUBJECTNAME=?,DOC_NO=?,DOC_TYPE=?,DOC_DATE='"+outputDateEnd+"',RELATED=?,DOC_PATH_LA=?,CREATED_DATE=sysdate," +
                     "MAKER_ID=?,SHARING_TYPE=?,DETAILS=?,taimard=?,years=?,CONNECT_NAME=? where ID=?";
             log.info("SQL2:"+SQL);
-        }
+
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
                 documentReq.getDocNo(), //ລະຫັດເອກະສານ
@@ -234,6 +229,33 @@ public class DocumentImpl implements DocumentDao {
                 //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
                // documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
                 documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
+                documentReq.getMarkerId(),//ຜູ້ສ້າງ
+                documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
+                documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
+                documentReq.getTaiMard(),
+                documentReq.getYearIn(),
+                documentReq.getConName(),
+                documentReq.getId()
+        });
+    }
+    public int updateDocExcutiveNofile(DocumentReq documentReq) throws ParseException {
+        String poEnd = documentReq.getDocDate();
+        SimpleDateFormat inputFormatEnd = new SimpleDateFormat("dd/MM/yyyy");
+        String outputDateEnd = inputFormatEnd.format(poEnd);
+
+        String filesEn = documentReq.getDocPathLa();
+            SQL="update DOC_CREATE set SUBJECTNAME=?,DOC_NO=?,DOC_TYPE=?,DOC_DATE='"+outputDateEnd+"',RELATED=?,CREATED_DATE=sysdate," +
+                    "MAKER_ID=?,SHARING_TYPE=?,DETAILS=?,taimard=?,years=?,CONNECT_NAME=? where ID=?";
+            log.info("SQL1:"+SQL);
+        return IADOCJdbcTemplate.update(SQL,new Object[]{
+                documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
+                documentReq.getDocNo(), //ລະຫັດເອກະສານ
+                documentReq.getDocType(), //ປະເພດເອກະສານ
+               // docDate, //ເອກະສານລົງວັນທີ່
+                documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
+                //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
+               // documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
+               // documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
                 documentReq.getMarkerId(),//ຜູ້ສ້າງ
                 documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
                 documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
