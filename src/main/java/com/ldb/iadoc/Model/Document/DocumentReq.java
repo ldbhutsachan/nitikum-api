@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 @Setter
@@ -37,7 +38,8 @@ public class DocumentReq {
     private String approveId;
     private String sharingType;
     private String details;
-
+    private String ses_status;
+    private String w_status_show;
     private String rejectBy;
     private String readBy;
     private String rejectDate;

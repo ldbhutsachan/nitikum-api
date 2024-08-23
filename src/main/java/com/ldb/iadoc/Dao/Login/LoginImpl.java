@@ -441,7 +441,7 @@ public class LoginImpl implements LoginDao{
             public Branch mapRow(ResultSet rs, int rowNum) throws SQLException {
                 Branch tr = new Branch();
                 tr.setID(rs.getString("ID"));
-                tr.setBranchCode(rs.getString("BRANCH_CODE"));
+             //   tr.setBranchCode(rs.getString("BRANCH_CODE"));
                 tr.setBrName(rs.getString("BRANCH_NAME"));
                 tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
                 tr.setLocation(rs.getString("LOCATION"));

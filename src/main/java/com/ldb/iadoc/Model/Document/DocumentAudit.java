@@ -1,9 +1,13 @@
 package com.ldb.iadoc.Model.Document;
 
+import com.ldb.iadoc.Model.Relation.Related;
+import com.ldb.iadoc.Model.Relation.RelatedShow;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Setter
 @Getter
@@ -49,7 +53,56 @@ public class DocumentAudit {
     private String createBy;
     private String typeAMT;
     private String status;
+    private String ses_status;
 
+    private List<Related> relatedList;
+    private List<RelatedShow> relatedShowList02;
+
+
+    @Override
+    public String toString() {
+        return "YourClassName response : {" +
+                "typeStatus='" + typeStatus + '\'' +
+                ", connectKanang='" + connectKanang + '\'' +
+                ", connectKanangAll='" + connectKanangAll + '\'' +
+                ", connects='" + connects + '\'' +
+                ", taiMard='" + taiMard + '\'' +
+                ", yearIn='" + yearIn + '\'' +
+                ", taiMardDes='" + taiMardDes + '\'' +
+                ", yearInDes='" + yearInDes + '\'' +
+                ", id='" + id + '\'' +
+                ", docNo='" + docNo + '\'' +
+                ", docType='" + docType + '\'' +
+                ", subjectName='" + subjectName + '\'' +
+                ", related='" + related + '\'' +
+                ", related_No='" + related_No + '\'' +
+                ", related_Name='" + related_Name + '\'' +
+                ", docStatus='" + docStatus + '\'' +
+                ", docPath='" + docPath + '\'' +
+                ", createDate='" + createDate + '\'' +
+                ", markerId='" + markerId + '\'' +
+                ", approveId='" + approveId + '\'' +
+                ", deleteId='" + deleteId + '\'' +
+                ", sharingType='" + sharingType + '\'' +
+                ", docPathLa='" + docPathLa + '\'' +
+                ", docDate='" + docDate + '\'' +
+                ", details='" + details + '\'' +
+                ", approveDate='" + approveDate + '\'' +
+                ", depDescEN='" + depDescEN + '\'' +
+                ", depDescLAO='" + depDescLAO + '\'' +
+                ", userName='" + userName + '\'' +
+                ", userNameApprove='" + userNameApprove + '\'' +
+                ", userNameUpdate='" + userNameUpdate + '\'' +
+                ", docDescEn='" + docDescEn + '\'' +
+                ", docDescLao='" + docDescLao + '\'' +
+                ", createBy='" + createBy + '\'' +
+                ", typeAMT='" + typeAMT + '\'' +
+                ", status='" + status + '\'' +
+                ", ses_status='" + ses_status + '\'' +
+                ", relatedList=" + relatedList +
+                ", relatedShowList02=" + relatedShowList02 +
+                '}';
+    }
 
 
 }

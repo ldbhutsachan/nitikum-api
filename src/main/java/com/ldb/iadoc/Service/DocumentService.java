@@ -9,6 +9,8 @@ import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
 import com.ldb.iadoc.Model.GroupHeaderReq;
 import com.ldb.iadoc.Model.GroupHeaderRes;
 import com.ldb.iadoc.Model.Login.Login;
+import com.ldb.iadoc.Model.Relation.Related;
+import com.ldb.iadoc.Model.Relation.RelatedShow;
 import com.ldb.iadoc.Model.ReponeRes;
 import com.ldb.iadoc.Model.GroupHeader;
 import org.apache.logging.log4j.LogManager;
@@ -89,6 +91,101 @@ public class DocumentService {
         }
         return  result;
     }
+    //***************************************update document ***********************************************************
+    public ReponeRes updateDocument(DocumentReq documentReq) throws ParseException {
+        log.info("show relatedName: {}"+documentReq.getRelated_Name());
+        ReponeRes result = new ReponeRes();
+        Message message = new Message();
+        int check = 0;
+        int checkSharing = 0;
+        if(documentReq.getDocDate().equals("")){
+            documentReq.setDocDate(documentReq.getDocDate());
+        }else {
+            SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
+            Date inputDate = inputDateFormat.parse(documentReq.getDocDate());
+            SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH);
+            String outputDateStr = outputDateFormat.format(inputDate);
+            documentReq.setDocDate(outputDateStr);
+        }
+        if(documentReq.getSharingType().equals("V")){
+            //************clear share data frist ********************************delete DOC_SHARING from where DOC_TYPE=?
+            documentImpl.clearSharingDataFrist(documentReq);
+            //************then let to update document  ********************************
+            check= documentImpl.upDateDocument(documentReq);
+            checkSharing= documentImpl.saveSharingDoBranch(documentReq);
+            log.info("update data sone case 01");
+        }else {
+            //************clear share data frist ********************************delete DOC_SHARING from where DOC_TYPE=?
+            documentImpl.clearSharingDataFrist(documentReq);
+
+            check= documentImpl.upDateDocument(documentReq);
+            checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq);
+            log.info("update data sone case 02");
+        }
+        try {
+            if (check > 0 && checkSharing > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                return result;
+            }else {
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgFail);
+                result.setMessage(message);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return  result;
+    }
+    public ReponeRes updateDocumentStatusShow(StatusShowReq documentReq) throws ParseException {
+        ReponeRes result = new ReponeRes();
+        Message message = new Message();
+        int check = 0;
+        try {
+            check = documentImpl.updateStatusShow(documentReq);
+            if (check > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                return result;
+            }else {
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgFail);
+                result.setMessage(message);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return  result;
+    }
+
     public ReponeRes SaveDocExcutive(DocumentReq documentReq) throws ParseException {
         ReponeRes result = new ReponeRes();
         Message message = new Message();
@@ -192,80 +289,97 @@ public class DocumentService {
         }
         return  result;
     }
-    public DocumentAuditRes getAuditListCheck(DocumentReq documentReq){
-        Message message = new Message();
+    public DocumentAuditRes getAuditListCheck(DocumentReq documentReq) {
         DocumentAuditRes result = new DocumentAuditRes();
-        List<DocumentAudit> listData = new ArrayList<>();
-        List<DocumentAudit> listData2 = new ArrayList<>();
-        listData = documentImpl.getAuditDocument(documentReq);
+        Message message = new Message();
+
         try {
-            if (listData.size() > 0) {
-                message.setResCode(Constant.codeDone);
-                message.setResMgs(Constant.msgDone);
-                result.setMessage(message);
-                result.setResData(listData);
-                return result;
-            } else {
-                message.setResCode(Constant.codeDataNotFound);
-                message.setResMgs(Constant.msgDataNotFound);
-                result.setMessage(message);
-                result.setResData(listData2);
-                return result;
+            // Retrieve the list of DocumentAudit and Related entities
+            List<DocumentAudit> auditList = documentImpl.getAuditDocument(documentReq);
+            List<Related> relatedList = documentImpl.getRsplistRelated();
+            List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
+            // Loop through the auditList to add related items
+            for (DocumentAudit audit : auditList) {
+                // Filter related items that match the docNo of the current audit
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+
+                // Set the relatedList for the current audit
+                audit.setRelatedList(matchingRelatedItems);
+
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
             }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+
+            // Populate the result
+            result.setResData(auditList);
+            message.setResMgs("ສໍາເລັດ");
+            message.setResCode("00");
+            result.setMessage(message);
+
+        } catch (Exception e) {
+            log.error("Error in getAuditListCheck: ", e);
+            message.setResMgs("Error: " + e.getMessage());
+            message.setResCode("99");
+            result.setMessage(message);
         }
+
         return result;
     }
-    public DocumentAuditRes getWaitListCheckByUser(DocumentReq documentReq){
+    public DocumentAuditRes getWaitListCheckByUser(DocumentReq documentReq) {
         Message message = new Message();
         DocumentAuditRes result = new DocumentAuditRes();
-        List<DocumentAudit> listData = new ArrayList<>();
-        List<DocumentAudit> listData2 = new ArrayList<>();
-        listData = documentImpl.getWaitListCheckByUser(documentReq);
+
         try {
-            if (listData.size() > 0) {
-                message.setResCode(Constant.codeDone);
-                message.setResMgs(Constant.msgDone);
-                result.setMessage(message);
-                result.setResData(listData);
-                return result;
-            } else {
-                message.setResCode(Constant.codeDataNotFound);
-                message.setResMgs(Constant.msgDataNotFound);
-                result.setMessage(message);
-                result.setResData(listData2);
-                return result;
+            // Retrieve the lists, with null checks
+            List<DocumentAudit> listData = documentImpl.getWaitListCheckByUser(documentReq);
+            List<Related> relatedList = documentImpl.getRsplistRelated();
+            List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
+            // Map related items to each audit
+            for (DocumentAudit audit : listData) {
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedList(matchingRelatedItems);
+
+                // Check if relatedShowList is empty or null
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
             }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            // Populate the result
+            result.setResData(listData);
+            message.setResMgs("ສໍາເລັດ");
+            message.setResCode("00");
+            result.setMessage(message);
+        } catch (Exception e) {
+            log.error("Exception occurred: {}", e.getMessage(), e);
+            message.setResMgs("An error occurred while processing the request.");
+            message.setResCode("99");
+            result.setMessage(message);
         }
+
         return result;
     }
+
+    private void handleException(Exception e) {
+        if (e instanceof NullPointerException) {
+            log.error("NullPointerException occurred", e);
+        } else if (e instanceof IllegalArgumentException) {
+            log.error("IllegalArgumentException occurred", e);
+        } else if (e instanceof ArrayIndexOutOfBoundsException) {
+            log.error("ArrayIndexOutOfBoundsException occurred", e);
+        } else {
+            log.error("An unexpected exception occurred: {}", e.getClass().getSimpleName(), e);
+        }
+        e.printStackTrace();
+    }
+
+
     public DocumentAuditRes getWaitListCheckExcutive(DocumentReq documentReq){
         Message message = new Message();
         DocumentAuditRes result = new DocumentAuditRes();
@@ -544,20 +658,33 @@ public class DocumentService {
     public DocumentAuditRes getShareDocument(DocumentReq documentReq){
         Message message = new Message();
         DocumentAuditRes result = new DocumentAuditRes();
-        List<DocumentAudit> listData = new ArrayList<>();
-        List<DocumentAudit> listData2 = new ArrayList<>();
-        List<Login> getCheckUserList = loginService.CheckUser(documentReq);
-        log.info("show:"+getCheckUserList.size());
-        if(getCheckUserList.size() < 0 ){
-            message.setResCode(Constant.codeError);
-            message.setResMgs(Constant.msgUserError);
-            result.setMessage(message);
-            return result;
-        }else {
-            documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
-        }
-        listData = documentImpl.getShareDocument(documentReq);
         try {
+            List<DocumentAudit> listData = new ArrayList<>();
+            List<Login> getCheckUserList = loginService.CheckUser(documentReq);
+            if(getCheckUserList.size() < 0 ){
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgUserError);
+                result.setMessage(message);
+                return result;
+            }else {
+                documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
+            }
+            listData = documentImpl.getShareDocument(documentReq);
+            List<Related> relatedList = documentImpl.getRsplistRelated();
+            List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
+            // Map related items to each audit
+            for (DocumentAudit audit : listData) {
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedList(matchingRelatedItems);
+
+                // Check if relatedShowList is empty or null
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
+            }
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
@@ -568,7 +695,7 @@ public class DocumentService {
                 message.setResCode(Constant.codeDataNotFound);
                 message.setResMgs(Constant.msgDataNotFound);
                 result.setMessage(message);
-                result.setResData(listData2);
+                result.setResData(null);
                 return result;
             }
         }catch (Exception e){

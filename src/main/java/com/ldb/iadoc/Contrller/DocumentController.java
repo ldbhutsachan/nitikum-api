@@ -2,11 +2,8 @@ package com.ldb.iadoc.Contrller;
 
 import com.ldb.iadoc.Model.DocType.DocTypeReq;
 import com.ldb.iadoc.Model.DocType.DocTypeRes;
-import com.ldb.iadoc.Model.Document.DocumentAuditRes;
-import com.ldb.iadoc.Model.Document.DocumentReq;
-import com.ldb.iadoc.Model.Document.DocumentRes;
+import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
-import com.ldb.iadoc.Model.Document.docSerachReq;
 import com.ldb.iadoc.Model.GroupHeaderReq;
 import com.ldb.iadoc.Model.GroupHeaderRes;
 import com.ldb.iadoc.Model.ReponeRes;
@@ -153,13 +150,13 @@ public class DocumentController {
                     @RequestParam("subjectName") String subjectName,
                     @RequestParam("docDate") String docDate,
                     @RequestParam("docType") String docType,
-                    @RequestParam("related") String related,
+                    @RequestParam("related") String related,///------------------------ຜ່າຍທີ່ຕ້ອງການເຜີຍເເຜ່
                     @RequestParam("deptCode") String deptCode,
                     @RequestParam("shareUserById") String shareUserById,
                     @RequestParam("markerId") String markerId,
                     @RequestParam("sharingType") String sharingType,
                     @RequestParam("details") String details,
-                    @RequestParam("related_No") String related_No,
+                    @RequestParam("related_No") String related_No,///------------------------ພາກສ່ວນຮັບຜິດຊອບ
                     @RequestParam("related_Name") String related_Name,
                     @RequestParam(value = "old_image1", required = false) String  old_image1,
                     @RequestParam(value = "old_image2", required = false) String  old_image2
@@ -249,6 +246,131 @@ public class DocumentController {
         }
         return  result;
     }
+    //***************************************************update data for document *************************************
+    @CrossOrigin(origins = "*")
+    @PostMapping(value = "/Document/updateDocument" , consumes = {"multipart/form-data"})
+    public ReponeRes updateDocument(
+            @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
+            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
+            @RequestParam("docNo") String docNo,
+            @RequestParam("subjectName") String subjectName,
+            @RequestParam("docDate") String docDate,
+            @RequestParam("docType") String docType,
+            @RequestParam("related") String related,
+            @RequestParam("markerId") String markerId,
+            @RequestParam("sharingType") String sharingType,
+            @RequestParam("details") String details,
+            @RequestParam("related_Name") String related_Name,
+            @RequestParam("ses_status") String ses_status,
+            @RequestParam("w_status_show") String w_status_show,
+            @RequestParam("id") String id,
+            @RequestParam(value = "old_image1", required = false) String  old_image1,
+            @RequestParam(value = "old_image2", required = false) String  old_image2
+    ){
+        log.info("==============>update document controller<==================");
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
+        String namefile = formatter.format(date);
+        ReponeRes result = new ReponeRes();
+        try{
+            DocumentReq data = new DocumentReq();
+            String a1 = "0";
+            if (docNo =="" || docNo.equals("")){
+                data.setDocNo(a1);
+            }
+            else if (subjectName == "" || subjectName.equals("")){
+                data.setSubjectName(a1);
+            }
+            else if (docDate == "" || docDate.equals("")){
+                data.setDocNo(a1);
+            }
+            else if (docDate == "" || docDate.equals("")){
+                data.setDocDate("");
+            }
+            else if (details == "" || details.equals("")){
+                data.setDetails(a1);
+            }
+           //data.setRelated_No(related_No);
+            data.setRelated_Name(related_Name);
+            data.setDocNo(docNo);
+            data.setSubjectName(subjectName);
+            data.setDocDate(docDate);
+            data.setDocType(docType);
+            data.setRelated(related);
+            data.setMarkerId(markerId);
+            data.setSharingType(sharingType);
+            data.setDetails(details);
+            data.setSes_status(ses_status);
+            data.setW_status_show(w_status_show);
+            data.setId(id);
+            String fileNameEn = "";
+            String fileNameLa = "";
+            List<String> fileNamesEn = new ArrayList<>();
+            List<String> fileNamesLa = new ArrayList<>();
+            //==========================ກວດສອບ ໄຟທີ 1==================================
+            if(filesEn == null){
+                log.warn("************* file EN is null ****************");
+                data.setDocPath(old_image1);
+            }
+            else if(filesEn != null) {
+                Arrays.asList(filesEn).stream().forEach(file -> {
+                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
+                });
+                fileNameEn = StringUtils.join(fileNamesEn, ',');
+                data.setDocPath(fileNameEn);
+            }
+            //   ==========================ກວດສອບ ໄຟທີ 2==================================
+            if(filesLao == null ){
+                log.warn("************* file LAO is null ****************");
+                data.setDocPathLa(old_image2);
+            }else if(filesLao != null){
+                log.warn("************* file LAO no null ****************");
+                Arrays.asList(filesLao).stream().forEach(file -> {
+                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
+                });
+                fileNameLa = StringUtils.join(fileNamesLa, ',');
+                data.setDocPathLa(fileNameLa);
+            }
+            result = documentService.updateDocument(data);
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return  result;
+    }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Document/updateStatusShow")
+    public ReponeRes updateStatusShow(@RequestBody StatusShowReq documentReq){
+        ReponeRes result = new ReponeRes();
+        try{
+           result = documentService.updateDocumentStatusShow(documentReq);
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+
     //*************report document
     @CrossOrigin(origins = "*")
     @PostMapping("/Share/getShareDocumentSubject")
