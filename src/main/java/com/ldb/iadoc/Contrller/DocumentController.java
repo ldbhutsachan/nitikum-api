@@ -66,7 +66,7 @@ public class DocumentController {
     @CrossOrigin(origins = "*")
     @PostMapping("/Share/getShareDocumentReport")
     public GroupHeaderRes getShareDocumentReport(@RequestBody GroupHeaderReq documentReq){
-        log.info("====================================================>get Report controller<=========================");
+        log.info("====================================================>get Report controller 99<=========================");
         System.out.println("getStartDate:"+documentReq.getStartDate());
         System.out.println("getEndDate:"+documentReq.getEndDate());
         System.out.println("getRelated:"+documentReq.getRelated_Name());

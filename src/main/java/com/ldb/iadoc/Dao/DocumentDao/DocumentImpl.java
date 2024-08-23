@@ -410,7 +410,33 @@ public class DocumentImpl implements DocumentDao {
                     return tr;
                 }
             });
+            // Log the retrieved data
+            if (data != null && !data.isEmpty()) {
+                log.info("Related Data Retrieved: {}", data.toString());
+            } else {
+                log.info("No Related Data found.");
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while retrieving related data", e);
+        }
+        return data;
+    }
+            public List<Related> getRsplistBranCh() {
+                List<Related> data = new ArrayList<>();
+                try {
 
+                    String SQL = "select * from branch";
+                    log.info("Executing SQL: {}", SQL);
+                    data = IADOCJdbcTemplate.query(SQL, new RowMapper<Related>() {
+                        @Override
+                        public Related mapRow(ResultSet rs, int rowNum) throws SQLException {
+                            Related tr = new Related();
+                            tr.setRelatedId(rs.getString("BRANCH_CODE"));
+                            tr.setRelatedName(rs.getString("BRANCH_NAME_LAO"));
+                           // tr.setDocNo(rs.getString("DOC_TYPE"));
+                            return tr;
+                        }
+                    });
             // Log the retrieved data
             if (data != null && !data.isEmpty()) {
                 log.info("Related Data Retrieved: {}", data.toString());
@@ -587,19 +613,19 @@ public class DocumentImpl implements DocumentDao {
     }
     public List<DocumentAudit> getShareDocumentReport(GroupHeaderReq documentReq) {
         if(documentReq.getStartDate() == null  && documentReq.getRelated_Name().equals("0")){
-            SQL="select * from V_DOCUMENT_FOR_ADMIN order by DOC_DESC_LAO,DOC_DATE asc";
+            SQL="select * from V_DOCUMENT_FOR_ADMIN order by DOC_DESC_LAO,Y,M,D DESC";
             log.info("SQL 01:"+SQL);
         }
         else if(documentReq.getStartDate()== null   && !documentReq.getRelated_Name().equals("0")){
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME='"+documentReq.getRelated_Name()+"' order by DOC_DESC_LAO,DOC_DATE asc";
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME='"+documentReq.getRelated_Name()+"' order by DOC_DESC_LAO,Y,M,D DESC";
             log.info("SQL 02:"+SQL);
         }
         else if(documentReq.getStartDate()!= null  && !documentReq.getRelated_Name().equals("0") ){
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME='"+documentReq.getRelated_Name()+"' and DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"'  order by DOC_DESC_LAO,DOC_DATE asc";
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME='"+documentReq.getRelated_Name()+"' and DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"'  order by DOC_DESC_LAO,Y,M,D DESC";
             log.info("SQL 03:"+SQL);
         }
         else if(documentReq.getStartDate() != null  && documentReq.getRelated_Name().equals("0")){
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"' order by DOC_DESC_LAO,DOC_DATE asc";
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"' order by DOC_DESC_LAO,Y,M,D DESC";
             log.info("SQL 04:"+SQL);
         }
 

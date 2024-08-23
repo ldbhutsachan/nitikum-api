@@ -4,6 +4,8 @@ import com.ldb.iadoc.Dao.DocumentDao.DocumentImpl;
 import com.ldb.iadoc.Dao.Login.LoginImpl;
 import com.ldb.iadoc.Mesage.Constant;
 import com.ldb.iadoc.Mesage.Message;
+import com.ldb.iadoc.Model.Branch.Branch;
+import com.ldb.iadoc.Model.Branch.BranchReq;
 import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
 import com.ldb.iadoc.Model.GroupHeaderReq;
@@ -417,19 +419,30 @@ public class DocumentService {
         }
         return result;
     }
+
     public GroupHeaderRes getShareDocumentReport(GroupHeaderReq documentReq){
         Message message = new Message();
         GroupHeaderRes result = new GroupHeaderRes();
         List<DocumentAudit> listData = new ArrayList<>();
             listData = documentImpl.getShareDocumentReport(documentReq);
-        List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
-        GroupHeader groupHeader = new GroupHeader();
-        List<GroupHeader> headers = new ArrayList<>();
+        List<Related> relatedList = documentImpl.getRsplistBranCh();
+
         List<DocumentAudit> resDataItems = new ArrayList<>();
-        for (String reNo : refIds){
-            groupHeader = new GroupHeader();
-            groupHeader.setRelated_Name(listData.stream().filter(p -> p.getRelated_Name().equals(reNo)).map(DocumentAudit::getRelated_Name).findFirst().orElse(""));
+        List<String> refIds = listData.stream()
+                .map(DocumentAudit::getRelated_Name)
+                .distinct()
+                .collect(Collectors.toList());
+        List<GroupHeader> headers = new ArrayList<>();
+        for (String reNo : refIds) {
+            GroupHeader groupHeader = new GroupHeader();
+            String matchingRelatedName = relatedList.stream()
+                    .filter(r -> r.getRelatedId() != null && r.getRelatedId().equals(reNo)) // compare the `RelatedId` with `reNo`
+                    .map(Related::getRelatedName) // Assuming `Related` has a method `getRelatedName()`
+                    .findFirst()
+                    .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
+            groupHeader.setRelated_Name(matchingRelatedName);
             headers.add(groupHeader);
+
             resDataItems = new ArrayList<>();
             for (DocumentAudit rspList : listData) {
                 if(rspList.getRelated_Name().equals(reNo)) {
