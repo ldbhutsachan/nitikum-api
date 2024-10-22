@@ -440,7 +440,7 @@ public class LoginImpl implements LoginDao{
             @Override
             public Branch mapRow(ResultSet rs, int rowNum) throws SQLException {
                 Branch tr = new Branch();
-                tr.setID(rs.getString("ID"));
+                tr.setID(rs.getString("BRANCH_CODE"));
              //   tr.setBranchCode(rs.getString("BRANCH_CODE"));
                 tr.setBrName(rs.getString("BRANCH_NAME"));
                 tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));

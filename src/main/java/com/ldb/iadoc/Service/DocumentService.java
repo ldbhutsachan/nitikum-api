@@ -432,6 +432,7 @@ public class DocumentService {
                 .map(DocumentAudit::getRelated_Name)
                 .distinct()
                 .collect(Collectors.toList());
+
         List<GroupHeader> headers = new ArrayList<>();
         for (String reNo : refIds) {
             GroupHeader groupHeader = new GroupHeader();
@@ -442,7 +443,6 @@ public class DocumentService {
                     .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
             groupHeader.setRelated_Name(matchingRelatedName);
             headers.add(groupHeader);
-
             resDataItems = new ArrayList<>();
             for (DocumentAudit rspList : listData) {
                 if(rspList.getRelated_Name().equals(reNo)) {
@@ -777,8 +777,21 @@ public class DocumentService {
         List<Login> getCheckUserList = loginService.CheckUser(documentReq);
         documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
         listData = documentImpl.getShareDocumentKanang(documentReq);
-
+        List<Related> relatedList = documentImpl.getRsplistRelated();
+        List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
         try {
+            for (DocumentAudit audit : listData) {
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedList(matchingRelatedItems);
+
+                // Check if relatedShowList is empty or null
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
+            }
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
