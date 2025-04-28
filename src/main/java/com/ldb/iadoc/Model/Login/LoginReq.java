@@ -17,6 +17,5 @@ public class LoginReq {
     private String oldUserName;
     private String oldPassword;
     private String newPwd;
-
     private String userType;
 }

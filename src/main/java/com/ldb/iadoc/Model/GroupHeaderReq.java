@@ -13,5 +13,7 @@ public class GroupHeaderReq {
     private String startDate;
     private String endDate;
     private String related_Name;
+    private String status;
     private String textSearch;
+    private String docId;
 }

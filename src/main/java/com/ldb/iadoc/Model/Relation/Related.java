@@ -13,6 +13,7 @@ public class Related {
     private String relatedId;
     private String relatedName;
     private String docNo;
+    private String docKey;
     @Override
     public String toString() {
         return "Related{" +

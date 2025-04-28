@@ -1,6 +1,7 @@
 package com.ldb.iadoc.Model;
 
 import com.ldb.iadoc.Mesage.Message;
+import com.ldb.iadoc.Model.Document.GroupHeaderReport;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,4 +15,5 @@ import java.util.List;
 public class GroupHeaderRes {
     private Message message;
     private List<GroupHeader> groupHeader;
+    private List<GroupHeaderReport> groupHeaderTotal;
 }

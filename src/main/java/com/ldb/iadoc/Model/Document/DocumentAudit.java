@@ -29,6 +29,7 @@ public class DocumentAudit {
     private String related;
     private String related_No;
     private String related_Name;
+    private Long amt;
     private String docStatus;
     private String docPath;
     private String createDate;
@@ -51,6 +52,7 @@ public class DocumentAudit {
     private String docDescEn;
     private String docDescLao;
     private String createBy;
+    private String docKey;
     private String typeAMT;
     private String status;
     private String ses_status;

@@ -10,6 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RelatedShow {
+private String docKey;
 private String RelatedShowId;
 private String RelatedShowName;
 private String RelatedShowDocNo;

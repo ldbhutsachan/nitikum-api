@@ -6,10 +6,8 @@ import com.ldb.iadoc.Model.Branch.ComboBand.ComboBranch;
 import com.ldb.iadoc.Model.Department.Dept;
 import com.ldb.iadoc.Model.Department.DeptReq;
 import com.ldb.iadoc.Model.Document.DocumentReq;
-import com.ldb.iadoc.Model.Login.Login;
+import com.ldb.iadoc.Model.Login.*;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwd;
-import com.ldb.iadoc.Model.Login.LoginReq;
-import com.ldb.iadoc.Model.Login.SignupReq;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSection;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionReq;
 import com.ldb.iadoc.Model.Section.ExcusiveSection.ComboSectionExReq;
@@ -24,6 +22,14 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface LoginDao {
+    public List<login_log> dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq);
+    public List<login_log> dologStatisticDetailsLogin(VWStatisticReq vwStatisticReq);
+
+    public List<VWStatistic_login> dologStatistic(VWStatisticReq vwStatisticReq) ;
+    public int saveDoLog(login_log logReq);
+    public List<ComboBranch> getComboxBranchStatus();
+    public List<VWStatistic_login> getStatisticLogin (VWStatisticReq vwStatisticReq );
+    public int saveLoginLog( List<Login> loginLog);
     public List<Login> CheckUser(DocumentReq documentReq);
     public List<Branch> getBranchExcutive(BranchReq branchReq);
     public int saveBranchExcutive(BranchReq branchReq);

@@ -5,11 +5,8 @@ import com.ldb.iadoc.Model.Branch.BranchRes;
 import com.ldb.iadoc.Model.Branch.ComboBand.ComboBranchRes;
 import com.ldb.iadoc.Model.Department.DeptReq;
 import com.ldb.iadoc.Model.Department.DeptRes;
-import com.ldb.iadoc.Model.Login.Login;
+import com.ldb.iadoc.Model.Login.*;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwdRes;
-import com.ldb.iadoc.Model.Login.LoginReq;
-import com.ldb.iadoc.Model.Login.LoginRes;
-import com.ldb.iadoc.Model.Login.SignupReq;
 import com.ldb.iadoc.Model.ReponeRes;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionReq;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionRes;
@@ -51,6 +48,15 @@ public class LoginController {
         result = loginService.LoginByUser(loginReq);
     return result;
     }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/log/doLogByUser")
+    public LoginRes doLogByUser(@RequestBody login_log loginReq){
+        log.info("====================================================>Login controller<=========================");
+    LoginRes result =new LoginRes();
+        result = loginService.doLog(loginReq);
+    return result;
+    }
     @CrossOrigin(origins = "*")
     @PostMapping("/User/getShowUserInfo")
     public LoginRes getShowUserInfo(@RequestBody LoginReq loginReq){
@@ -59,6 +65,43 @@ public class LoginController {
         result = loginService.getShowUserInfo(loginReq);
         return result;
     }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/log/getStatisticLogin")
+    public VWStatisticRes getStatisticLogin(@RequestBody VWStatisticReq loginReq){
+        log.info("====================================================>VWStatisticRes controller<=========================");
+        VWStatisticRes result =new VWStatisticRes();
+        result = loginService.getStatistic(loginReq);
+        return result;
+    }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/log/dologStatistic")
+    public VWStatisticRes dologStatistic(@RequestBody VWStatisticReq loginReq){
+        log.info("====================================================>VWStatisticRes controller<=========================");
+        VWStatisticRes result =new VWStatisticRes();
+        result = loginService.dologStatistic(loginReq);
+        return result;
+    }
+
+
+  @CrossOrigin(origins = "*")
+    @PostMapping("/log/dologStatisticDetailsDoc")
+    public VWStatisticLogRes dologStatisticDetailsDoc(@RequestBody VWStatisticReq loginReq){
+        log.info("====================================================>VWStatisticRes controller<=========================");
+      VWStatisticLogRes result =new VWStatisticLogRes();
+        result = loginService.dologStatisticDetailsDoc(loginReq);
+        return result;
+    }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/log/dologStatisticDetailsLogin")
+    public VWStatisticLogRes dologStatisticDetailsLogin(@RequestBody VWStatisticReq loginReq){
+        log.info("====================================================>ທົດລອງ controller<=========================");
+      VWStatisticLogRes result =new VWStatisticLogRes();
+        result = loginService.dologStatisticDetailsLog(loginReq);
+        return result;
+    }
+
     @CrossOrigin(origins = "*")
     @PostMapping("/UserType/getUserType")
     public UserTypeRes getUserType(){
@@ -177,6 +220,14 @@ public class LoginController {
         result = loginService.getBranchList(branchReq);
         return  result;
     }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Branch/getBranchListStatus")
+    public BranchRes getBranchListStatus(@RequestBody BranchReq branchReq){
+        log.info("====================================================>getBranchList controller<=========================");
+        BranchRes result = new BranchRes();
+        result = loginService.getBranchListStatus(branchReq);
+        return  result;
+    }
     //=========================section =========
     @CrossOrigin(origins = "*")
     @PostMapping("/Section/SaveSection")
@@ -208,6 +259,14 @@ public class LoginController {
         log.info("====================================================>getComboxBranch controller<=========================");
         ComboBranchRes result = new ComboBranchRes();
         result = loginService.getComboxBranch();
+        return  result;
+    }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Branch/getComboxBranchStatus")
+    public ComboBranchRes getComboxBranchStatus(){
+        log.info("====================================================>getComboxBranch controller<=========================");
+        ComboBranchRes result = new ComboBranchRes();
+        result = loginService.getComboxBranchStatus();
         return  result;
     }
     @CrossOrigin(origins = "*")

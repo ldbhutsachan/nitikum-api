@@ -15,5 +15,6 @@ import java.util.List;
 public class GroupHeader {
 
     private String related_Name;
+    private String related_amt;
     private List<DocumentAudit> details;
 }

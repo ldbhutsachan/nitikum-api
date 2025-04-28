@@ -75,17 +75,18 @@ public class DocumentImpl implements DocumentDao {
         }
         return 1;
     }
-    public int saveSharingDoBranch(DocumentReq documentReq) {
-        log.info("==========share data to User==========");
+    public int saveSharingDoBranch(DocumentReq documentReq,String keyDocNo) {
         String ListBranch = documentReq.getRelated();
         String str = ListBranch;
         String trimmedStr = str.substring(0, str.length() - 0);
         String[] bandArray = trimmedStr.split(",");
         System.out.println("show array:"+Arrays.toString(bandArray));
-        SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE,SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
+        SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE," +
+                "SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
         for (String branch : bandArray) {
             IADOCJdbcTemplate.update(SQL,
-                    documentReq.getDocNo(),
+                    keyDocNo,
+                    //documentReq.getDocNo(),
                     branch,
                     documentReq.getSharingType());
         }
@@ -143,13 +144,13 @@ public class DocumentImpl implements DocumentDao {
         }
         return 1;
     }
-    public int saveSharingDoBranchNoarray(DocumentReq documentReq) {
-        log.info("==========share data to User==========");
+    public int saveSharingDoBranchNoarray(DocumentReq documentReq,String keyDocNo) {
+
         String ListBranch = documentReq.getRelated();
         SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE,SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
         log.info("show sql array:"+SQL);
             IADOCJdbcTemplate.update(SQL,
-                    documentReq.getDocNo(),
+                    keyDocNo,
                     ListBranch,
                     documentReq.getSharingType());
         return 1;
@@ -172,10 +173,12 @@ public class DocumentImpl implements DocumentDao {
         });
     }
     @Override
-    public int SaveDocument(DocumentReq documentReq) throws ParseException {
+    public int SaveDocument(DocumentReq documentReq,String keyDocNo) throws ParseException {
      log.info("show:"+documentReq.getDocDate());
-        SQL="insert into DOC_CREATE (STATUS_SHOW,SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,type,RELETED_NAME) " +
-                "values ('N',?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?)";
+        SQL="insert into DOC_CREATE (STATUS_SHOW,SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE," +
+                "RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID," +
+                "SHARING_TYPE,DETAILS,type,RELETED_NAME,DOC_KEY) " +
+                "values ('N',?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?,?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
                 documentReq.getDocNo(), //ລະຫັດເອກະສານ
@@ -188,31 +191,44 @@ public class DocumentImpl implements DocumentDao {
                 documentReq.getMarkerId(),//ຜູ້ສ້າງ
                 documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
                 documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
-                documentReq.getRelated_Name()
+                documentReq.getRelated_Name(),
+                keyDocNo
         });
     }
-    public int upDateDocument(DocumentReq documentReq) throws ParseException {
-     log.info("show:"+documentReq.getDocDate());
-        SQL="update  DOC_CREATE set STATUS_SHOW=?,WHO_C_STATUS_SHOW=?,SUBJECTNAME=?,DOC_NO=?,DOC_TYPE=?,DOC_DATE=?," +
-                "RELATED=?,DOC_PATH=?,DOC_PATH_LA=?,CREATED_DATE=sysdate,SHARING_TYPE=?,DETAILS=?,RELETED_NAME=? where id=?";
-        log.info("show sql:"+SQL);
-        return IADOCJdbcTemplate.update(SQL,new Object[]{
-               documentReq.getSes_status(),//ສະຖານະເອກະສານ
-               documentReq.getW_status_show(),//ຜູ້ປິດເອກະສານ
-               documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
-                documentReq.getDocNo(), //ລະຫັດເອກະສານ
-                documentReq.getDocType(), //ປະເພດເອກະສານ
-                documentReq.getDocDate(), //ເອກະສານລົງວັນທີ່
-                documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
-                //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
-                documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
-                documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
-              //  documentReq.getMarkerId(),//ຜູ້ສ້າງ
-                documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
-                documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
-                documentReq.getRelated_Name(),
-                documentReq.getId()
+    public int upDateDocument(DocumentReq documentReq,String filesLaoPDF,String  filesEnPDF) throws ParseException {
+        log.info("filesLaoPDF: " + filesLaoPDF);
+        log.info("filesEnPDF: " + filesEnPDF);
+        String con = "";
+        String con2 = "";
+
+        if (!"lo".equals(filesLaoPDF)) {
+            con = " ,DOC_PATH_LA ='" + documentReq.getDocPathLa() + "' ";
+        }
+        if (!"en".equals(filesEnPDF)) {
+            con2 = " ,DOC_PATH ='" + documentReq.getDocPath() + "'";
+        }
+
+        // Construct SQL query with the optional con and con2 parts
+        String SQL = "UPDATE DOC_CREATE SET STATUS_SHOW=?, WHO_C_STATUS_SHOW=?, SUBJECTNAME=?, DOC_NO=?, DOC_TYPE=?, DOC_DATE=?, " +
+                "RELATED=?, CREATED_DATE=sysdate, SHARING_TYPE=?, DETAILS=?, RELETED_NAME=? " + con + con2 + " WHERE id=?";
+
+        log.info("show SQL: " + SQL);
+
+        // Execute the update with parameters
+        return IADOCJdbcTemplate.update(SQL, new Object[]{
+                documentReq.getSes_status(),      // Document status
+                documentReq.getW_status_show(),   // Document close status
+                documentReq.getSubjectName(),     // Document subject
+                documentReq.getDocNo(),           // Document code
+                documentReq.getDocType(),         // Document type
+                documentReq.getDocDate(),         // Document date
+                documentReq.getRelated(),         // Related branch or department
+                documentReq.getSharingType(),     // Document sharing type
+                documentReq.getDetails(),         // Document details
+                documentReq.getRelated_Name(),    // Related name
+                documentReq.getId()               // Document ID
         });
+
     }
     //=======================update status to show document ============================================
     public int updateStatusShow (StatusShowReq statusShowReq){
@@ -387,6 +403,22 @@ public class DocumentImpl implements DocumentDao {
                 tr.setSharingType(rs.getString("SHARING_TYPE"));
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
+
+                tr.setDocKey(rs.getString("DOC_KEY"));
+                return tr;
+            }
+        });
+    }
+
+    @Override
+    public List<KeyReq> getMaxKey(){
+        SQL="select max(id+1) docKey from doc_create";
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<KeyReq>() {
+            @Override
+            public KeyReq mapRow(ResultSet rs, int rowNum) throws SQLException {
+                KeyReq tr = new KeyReq();
+                tr.setKeyDocNo(rs.getString("docKey"));
+
                 return tr;
             }
         });
@@ -425,12 +457,17 @@ public class DocumentImpl implements DocumentDao {
                 List<Related> data = new ArrayList<>();
                 try {
 
-                    String SQL = "select * from branch";
+                    String SQL = "SELECT  a.DOC_KEY,\n" +
+                            "                    a.doc_no,b.BRANCH_CODE,b.BRANCH_NAME_LAO\n" +
+                            "                    FROM DOC_CREATE a \n" +
+                            "                    JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' \n" +
+                            "                    WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  ORDER BY  a.DOC_NO DESC";
                     log.info("Executing SQL: {}", SQL);
                     data = IADOCJdbcTemplate.query(SQL, new RowMapper<Related>() {
                         @Override
                         public Related mapRow(ResultSet rs, int rowNum) throws SQLException {
                             Related tr = new Related();
+                            tr.setDocKey(rs.getString("DOC_KEY"));
                             tr.setRelatedId(rs.getString("BRANCH_CODE"));
                             tr.setRelatedName(rs.getString("BRANCH_NAME_LAO"));
                            // tr.setDocNo(rs.getString("DOC_TYPE"));
@@ -451,7 +488,7 @@ public class DocumentImpl implements DocumentDao {
     public List<RelatedShow> getRsplistRelatedShow() {
         List<RelatedShow> data = new ArrayList<>();
         try {
-            String SQL = "SELECT \n" +
+            String SQL = "SELECT  a.DOC_KEY,\n" +
                     "a.doc_no,b.BRANCH_CODE,b.BRANCH_NAME_LAO\n" +
                     "FROM DOC_CREATE a JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  ORDER BY  a.DOC_NO DESC ";
             log.info("Executing SQL: {}", SQL);
@@ -460,6 +497,7 @@ public class DocumentImpl implements DocumentDao {
                 @Override
                 public RelatedShow mapRow(ResultSet rs, int rowNum) throws SQLException {
                     RelatedShow tr = new RelatedShow();
+                    tr.setDocKey(rs.getString("DOC_KEY"));
                     tr.setRelatedShowId(rs.getString("BRANCH_CODE"));
                     tr.setRelatedShowName(rs.getString("BRANCH_NAME_LAO"));
                     tr.setRelatedShowDocNo(rs.getString("doc_no"));
@@ -480,7 +518,7 @@ public class DocumentImpl implements DocumentDao {
 
     @Override
     public List<DocumentAudit> getWaitListCheckByUser(DocumentReq documentReq) {
-        SQL="select * from V_WAIT_DOCUMENT_LAW where type='1' and MAKER_ID='"+documentReq.getMarkerId()+"' order by ID asc";
+        SQL="select * from V_WAIT_DOCUMENT_LAW where type='1'  order by ID asc";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -511,6 +549,8 @@ public class DocumentImpl implements DocumentDao {
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
                 tr.setSes_status(rs.getString("SES_STATUS"));
+
+                tr.setDocKey(rs.getString("DOC_KEY"));
                 return tr;
             }
         });
@@ -559,24 +599,35 @@ public class DocumentImpl implements DocumentDao {
     }
     @Override
     public List<DocumentAudit> getShareDocument(DocumentReq documentReq) {
-        String userType= documentReq.getUserType();
-        if(userType.equals("A")){
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN order by ID asc";
-            log.info("SQL:"+SQL);
-        }else if(userType.equals("M")){
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+        // Initialize SQL query
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT * FROM V_DOCUMENT_FOR_ADMIN WHERE 1=1");
+
+        // Add conditional logic based on user type
+        String userType = documentReq.getUserType();
+        String makerId = documentReq.getMarkerId();
+        if ("A".equals(userType)) {
+            sb.append(" AND ID IS NOT NULL");
+        } else if ("M".equals(userType) || "U".equals(userType)) {
+            sb.append(" AND (USER_NAME = ? OR SHARING_TYPE = ?)");
+        } else {
+            sb.append(" AND (USER_NAME = ? OR SHARING_TYPE = ?)");
         }
-        else if(userType.equals("U")){
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
-        }
-        else {
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
-        }
-        return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
+
+        // Append ORDER BY clause
+        sb.append(" ORDER BY ID desc");
+
+        // Convert StringBuilder to String
+        String sql = sb.toString();
+        log.info("Executing SQL query: {}", sql);
+
+        // Prepare query parameters based on user type
+        Object[] queryParams = "A".equals(userType) ?
+                new Object[] {} : // No parameters for user type "A"
+                new Object[] { makerId, "ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ" };
+
+        // Execute query using JdbcTemplate
+        return IADOCJdbcTemplate.query(sql, queryParams, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
@@ -590,7 +641,6 @@ public class DocumentImpl implements DocumentDao {
                 tr.setSubjectName(rs.getString("SubjectName"));
                 tr.setApproveDate(rs.getString("APPROVE_DATE"));
                 tr.setDocNo(rs.getString("DOC_NO"));
-                tr.setSubjectName(rs.getString("SubjectName"));
                 tr.setRelated(rs.getString("RELATED"));
                 tr.setDepDescEN(rs.getString("DEPT_DESC_EN"));
                 tr.setDepDescLAO(rs.getString("DEPT_DESC_LAO"));
@@ -606,27 +656,52 @@ public class DocumentImpl implements DocumentDao {
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
                 tr.setCreateBy(rs.getString("createBy"));
-               // tr.setStatus(rs.getString("status"));
+                tr.setDocKey(rs.getString("DOC_KEY"));
+                tr.setAmt(rs.getLong("amt"));
                 return tr;
             }
         });
     }
+
     public List<DocumentAudit> getShareDocumentReport(GroupHeaderReq documentReq) {
         StringBuilder sb = new StringBuilder();
+        String status= documentReq.getStatus();
+        String condictionStatus="";
         String condit = "";
         String condit01 = "";
+        String conditType = "";
         String conditOrder = " order by DOC_DESC_LAO,Y,M,D DESC";
+        if("0".equals(documentReq.getDocId())){
+            conditType=" AND DOC_TYPE is not null ";
+        }else
+        {
+            conditType=" and DOC_TYPE ='"+documentReq.getDocId()+"' ";
+        }
+        if("1".equals(status)){
+                condictionStatus = " AND SES_STATUS ='N'";
+        }
+        else if("2".equals(status)){
+            condictionStatus = " AND SES_STATUS ='O'";
+        }else {
+            condictionStatus = " AND SES_STATUS is not null ";
+        }
+
         if (documentReq.getStartDate().equals("0") && documentReq.getEndDate().equals("0") ) {
             condit = " AND RELETED_NAME is not null ";
         } else if(!documentReq.getStartDate().equals("0")  && !documentReq.getEndDate().equals("0") ){
-            condit = " AND RELETED_NAME is not null AND AND DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"'";
+            condit = " AND RELETED_NAME is not null AND  DOC_DATESREACH between '"+documentReq.getStartDate()+"' and  '"+documentReq.getEndDate()+"'";
         }
         if(documentReq.getRelated_Name().equals("0")){
             condit01 = " ";
         }else{
             condit01 = " AND RELETED_NAME is not null AND RELETED_NAME='"+documentReq.getRelated_Name()+"'";
         }
-        sb.append("select * from V_DOCUMENT_FOR_ADMIN where 1=1").append(condit).append(condit01).append(conditOrder);
+        sb.append("select * from V_DOCUMENT_FOR_ADMIN where 1=1")
+                .append(condit)
+                .append(condit01)
+                .append(condictionStatus)
+                .append(conditType)
+                .append(conditOrder);
         String sql = sb.toString();
         log.info("show sql:"+sql);
         return IADOCJdbcTemplate.query(sql, new RowMapper<DocumentAudit>() {
@@ -634,6 +709,7 @@ public class DocumentImpl implements DocumentDao {
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
                 tr.setRelated_Name(rs.getString("RELETED_NAME"));
+                tr.setAmt(rs.getLong("amt"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));
@@ -659,6 +735,7 @@ public class DocumentImpl implements DocumentDao {
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
                 tr.setCreateBy(rs.getString("createBy"));
+                tr.setDocKey(rs.getString("DOC_KEY"));
                // tr.setStatus(rs.getString("status"));
                 return tr;
             }
@@ -711,15 +788,15 @@ public class DocumentImpl implements DocumentDao {
             log.info("SQL:"+SQL);
         }else if(userType.equals("M")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ' order by ID asc";
         }
         else if(userType.equals("U")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ' order by ID asc";
         }
         else {
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+            SQL="select * from V_DOCUMENT where USER_NAME='"+documentReq.getMarkerId()+"' OR SHARING_TYPE='ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ' order by ID asc";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
@@ -760,7 +837,9 @@ public class DocumentImpl implements DocumentDao {
         String userType= documentReq.getUserType();
         if(userType.equals("A")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where SubjectName like'%"+documentReq.getSubjectName()+"%' or DOC_NO like'%"+documentReq.getSubjectName()+"%'  order by ID asc";
+            SQL="select * from V_DOCUMENT_FOR_ADMIN " +
+                    "where SubjectName like'%"+documentReq.getSubjectName()+"%' or " +
+                    "DOC_NO like'%"+documentReq.getSubjectName()+"%'  order by ID asc";
             log.info("SQL1:"+SQL);
         }else if(userType.equals("M")){
             log.info("userType:"+documentReq.getUserType());
@@ -816,26 +895,35 @@ public class DocumentImpl implements DocumentDao {
     }
     public List<DocumentAudit> getShareDocumentKanang(DocumentReq documentReq) {
         String userType= documentReq.getUserType();
-        if(userType.equals("A")){
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+documentReq.getSecCode()+"%'  order by ID asc";
-            log.info("sql:"+SQL);
-        }else if(userType.equals("M")){
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+documentReq.getSecCode()+"%' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
-            log.info("sql:"+SQL);
+        String secCode = documentReq.getSecCode();
+        String orderbyData = "\n order by ID asc";
+        String conSecCode = " ";
+        String conUserType = " ";
+        if("A".equals(userType)){
+            conUserType = "\n USER_ALLOW is not null";
+        }else if("M".equals(userType)){
+            conUserType = "\n AND USER_ALLOW =' "+documentReq.getMarkerId()+"'";
         }
-        else if(userType.equals("U")){
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+documentReq.getSecCode()+"%' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
-            log.info("sql:"+SQL);
+        else if("U".equals(userType)){
+            conUserType = "\n USER_ALLOW is not null";
         }
         else {
-            log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME like '%"+documentReq.getSecCode()+"%' and USER_ALLOW ='"+documentReq.getMarkerId()+"' order by ID asc";
-            log.info("sql:"+SQL);
+            conUserType = "\n USER_ALLOW is not null";
         }
-        return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
+        if(secCode != null || secCode.equals(null)){
+            conSecCode = " AND RELETED_NAME LIKE '%"+documentReq.getSecCode()+"%'";
+        }else
+        {
+            conSecCode = "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT * FROM V_DOCUMENT_FOR_ADMIN WHERE 1=1 ");
+        sb.append(conSecCode);
+        sb.append(conUserType);
+        sb.append(orderbyData);
+        String sql = sb.toString();
+        log.info("show sqoL:"+sql);
+        return IADOCJdbcTemplate.query(sql, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
@@ -865,6 +953,7 @@ public class DocumentImpl implements DocumentDao {
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
                 tr.setCreateBy(rs.getString("createBy"));
+                tr.setDocKey(rs.getString("DOC_KEY"));
                // tr.setStatus(rs.getString("status"));
                 return tr;
             }
@@ -934,6 +1023,7 @@ public class DocumentImpl implements DocumentDao {
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
                 tr.setCreateBy(rs.getString("createBy"));
+                tr.setDocKey(rs.getString("DOC_KEY"));
                // tr.setStatus(rs.getString("status"));
                 return tr;
             }
@@ -1065,12 +1155,12 @@ public class DocumentImpl implements DocumentDao {
         log.info("docDate:"+docDate);
         log.info("endDate:"+endDate);
         if(documentReq.getStartDate() == null){
-            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' or SHARING_TYPE ='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ'  order by ID asc";
+            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' or SHARING_TYPE ='ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ'  order by ID asc";
         }else if(documentReq.getStartDate() != null){
             SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' and  " +
-                    "CREATED_DATE between '"+docDate+"' and '"+endDate+"' or SHARING_TYPE ='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+                    "CREATED_DATE between '"+docDate+"' and '"+endDate+"' or SHARING_TYPE ='ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ' order by ID asc";
         }else {
-            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' or SHARING_TYPE ='Normal-ອະນຸຍາດໃຫ້ທຸກຄົນເຫັນຂໍ້ມູນ' order by ID asc";
+            SQL="select * from V_REPORT_DOCUMENT where USER_ALLOW='"+documentReq.getMarkerId()+"' or SHARING_TYPE ='ອະນຸຍາດໃຫ້ທຸກຄົນເຂົ້າເຖິງ' order by ID asc";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override

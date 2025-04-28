@@ -70,6 +70,7 @@ public class DocumentController {
         System.out.println("getStartDate:"+documentReq.getStartDate());
         System.out.println("getEndDate:"+documentReq.getEndDate());
         System.out.println("getRelated:"+documentReq.getRelated_Name());
+        System.out.println("getRelated status:"+documentReq.getStatus());
         GroupHeaderRes result =new GroupHeaderRes();
         result = documentService.getShareDocumentReport(documentReq);
         return result;
@@ -229,7 +230,9 @@ public class DocumentController {
                 fileNameLa = StringUtils.join(fileNamesLa, ',');
                 data.setDocPathLa(fileNameLa);
             }
-            result = documentService.SaveDocument(data);
+            List<KeyReq> rspListData = documentService.getMaxKey();
+            String keyDocNo  = rspListData.get(0).getKeyDocNo();
+            result = documentService.SaveDocument(data,keyDocNo);
         }catch (Exception e){
             if (e instanceof NullPointerException) {
                 System.out.println("NullPointerException occurred");
@@ -273,6 +276,14 @@ public class DocumentController {
         String namefile = formatter.format(date);
         ReponeRes result = new ReponeRes();
         try{
+            String filesLaoPDF = "dataLao";
+            String filesEnPDF = "dataEn";
+            if (filesLao == null || filesLao.length == 0) {
+                 filesLaoPDF = "lo";
+            }
+            if (filesEn == null || filesEn.length == 0) {
+                 filesEnPDF = "en";
+            }
             DocumentReq data = new DocumentReq();
             String a1 = "0";
             if (docNo =="" || docNo.equals("")){
@@ -331,7 +342,10 @@ public class DocumentController {
                 fileNameLa = StringUtils.join(fileNamesLa, ',');
                 data.setDocPathLa(fileNameLa);
             }
-            result = documentService.updateDocument(data);
+
+            List<KeyReq> rspListData = documentService.getMaxKey();
+            String keyDocNo  = rspListData.get(0).getKeyDocNo();
+            result = documentService.updateDocument(data,filesLaoPDF,filesEnPDF,keyDocNo);
         }catch (Exception e){
             if (e instanceof NullPointerException) {
                 System.out.println("NullPointerException occurred");

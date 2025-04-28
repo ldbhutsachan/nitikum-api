@@ -15,4 +15,5 @@ private String brNameLa;
 private String location;
 private String brType;
 private String underBr;
+private String status;
 }

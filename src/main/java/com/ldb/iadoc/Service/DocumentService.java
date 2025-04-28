@@ -22,10 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +32,20 @@ public class DocumentService {
     DocumentImpl documentImpl;
     @Autowired
     LoginImpl loginService;
-    public ReponeRes SaveDocument(DocumentReq documentReq) throws ParseException {
+
+    public List<KeyReq> getMaxKey() {
+        List<KeyReq> result = new ArrayList<>();
+        try {
+            result =  documentImpl.getMaxKey();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return result;
+
+    }
+
+
+    public ReponeRes SaveDocument(DocumentReq documentReq,String keyDocNo) throws ParseException {
         ReponeRes result = new ReponeRes();
         Message message = new Message();
         int check = 0;
@@ -43,22 +53,24 @@ public class DocumentService {
         if(documentReq.getDocDate().equals("")){
             documentReq.setDocDate(documentReq.getDocDate());
         }else {
-            SimpleDateFormat inputDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-            Date inputDate = inputDateFormat.parse(documentReq.getDocDate());
+            SimpleDateFormat inputDateFormat = new SimpleDateFormat("yy-MM-dd", Locale.ENGLISH);
+            Date inputDate = inputDateFormat.parse(documentReq.getDocDate()); // Parse the input date
+
             SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH);
-            String outputDateStr = outputDateFormat.format(inputDate);
-            documentReq.setDocDate(outputDateStr);
+            String formattedDate = outputDateFormat.format(inputDate); // Ensure the date is formatted correctly
+            documentReq.setDocDate(formattedDate);
         }
          if(documentReq.getSharingType().equals("V")){
-            log.info("User:"+documentReq.getSharingType());
-             check= documentImpl.SaveDocument(documentReq);
-            checkSharing= documentImpl.saveSharingDoBranch(documentReq);
+             log.info("show log 01:");
+             check= documentImpl.SaveDocument(documentReq,keyDocNo);
+            checkSharing= documentImpl.saveSharingDoBranch(documentReq,keyDocNo);
             //********************insert section for share by array data *******************
             documentImpl.saveRedNo(documentReq);
             documentImpl.DOC_CREATE_TEMP(documentReq);
         }else {
-             check= documentImpl.SaveDocument(documentReq);
-             checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq);
+             log.info("show log 02:");
+             check= documentImpl.SaveDocument(documentReq,keyDocNo);
+             checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq,keyDocNo);
              //********************insert section for share by array data *******************
              documentImpl.saveRedNo(documentReq);
              documentImpl.DOC_CREATE_TEMP(documentReq);
@@ -94,8 +106,8 @@ public class DocumentService {
         return  result;
     }
     //***************************************update document ***********************************************************
-    public ReponeRes updateDocument(DocumentReq documentReq) throws ParseException {
-        log.info("show relatedName: {}"+documentReq.getRelated_Name());
+    public ReponeRes updateDocument(DocumentReq documentReq,String filesLaoPDF,String  filesEnPDF,String keyDocNo) throws ParseException {
+
         ReponeRes result = new ReponeRes();
         Message message = new Message();
         int check = 0;
@@ -103,25 +115,27 @@ public class DocumentService {
         if(documentReq.getDocDate().equals("")){
             documentReq.setDocDate(documentReq.getDocDate());
         }else {
-            SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
-            Date inputDate = inputDateFormat.parse(documentReq.getDocDate());
-            SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH);
-            String outputDateStr = outputDateFormat.format(inputDate);
-            documentReq.setDocDate(outputDateStr);
+            SimpleDateFormat inputDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH); // Updated to match input format
+            Date inputDate = inputDateFormat.parse(documentReq.getDocDate()); // Parse the input date
+
+            SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH); // Desired output format
+            String outputDateStr = outputDateFormat.format(inputDate); // Format the parsed date
+
+            documentReq.setDocDate(outputDateStr); // Update the documentReq object
+
         }
         if(documentReq.getSharingType().equals("V")){
             //************clear share data frist ********************************delete DOC_SHARING from where DOC_TYPE=?
             documentImpl.clearSharingDataFrist(documentReq);
             //************then let to update document  ********************************
-            check= documentImpl.upDateDocument(documentReq);
-            checkSharing= documentImpl.saveSharingDoBranch(documentReq);
+            check= documentImpl.upDateDocument(documentReq, filesLaoPDF,  filesEnPDF);
+            checkSharing= documentImpl.saveSharingDoBranch(documentReq,keyDocNo);
             log.info("update data sone case 01");
         }else {
             //************clear share data frist ********************************delete DOC_SHARING from where DOC_TYPE=?
             documentImpl.clearSharingDataFrist(documentReq);
-
-            check= documentImpl.upDateDocument(documentReq);
-            checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq);
+            check= documentImpl.upDateDocument(documentReq, filesLaoPDF,  filesEnPDF);
+            checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq,keyDocNo);
             log.info("update data sone case 02");
         }
         try {
@@ -311,7 +325,7 @@ public class DocumentService {
                 audit.setRelatedList(matchingRelatedItems);
 
                 List<RelatedShow> relatedShows = relatedShowList.stream()
-                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
                         .collect(Collectors.toList());
                 audit.setRelatedShowList02(relatedShows);
             }
@@ -349,7 +363,7 @@ public class DocumentService {
 
                 // Check if relatedShowList is empty or null
                 List<RelatedShow> relatedShows = relatedShowList.stream()
-                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
                         .collect(Collectors.toList());
                 audit.setRelatedShowList02(relatedShows);
             }
@@ -426,14 +440,35 @@ public class DocumentService {
         List<DocumentAudit> listData = new ArrayList<>();
             listData = documentImpl.getShareDocumentReport(documentReq);
         List<Related> relatedList = documentImpl.getRsplistBranCh();
-
+        GroupHeaderReport headerSum = new GroupHeaderReport();
         List<DocumentAudit> resDataItems = new ArrayList<>();
         List<String> refIds = listData.stream()
                 .map(DocumentAudit::getRelated_Name)
                 .distinct()
                 .collect(Collectors.toList());
 
+        List<String> docName = listData.stream()
+                .map(DocumentAudit::getDocDescLao)
+                .distinct()
+                .collect(Collectors.toList());
+
         List<GroupHeader> headers = new ArrayList<>();
+        List<GroupHeaderReport> HeaderTotal = new ArrayList<>();
+
+        for (String docNameList : docName) {
+            GroupHeaderReport groupHeaderTotal = new GroupHeaderReport();
+            String headerSecName = listData.stream()
+                    .filter(r -> r.getDocDescLao() != null && r.getDocDescLao().equals(docNameList)) // compare the `RelatedId` with `reNo`
+                    .map(DocumentAudit::getDocDescLao) // Assuming `Related` has a method `getRelatedName()`
+                    .findFirst()
+                    .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
+            groupHeaderTotal.setSecName(headerSecName);
+            Long totalAmt = listData.stream().filter(r -> r.getDocDescLao().equals(docNameList))
+                    .map(DocumentAudit::getDocNo).count();
+            groupHeaderTotal.setAmt(totalAmt);
+            HeaderTotal.add(groupHeaderTotal);
+        }
+
         for (String reNo : refIds) {
             GroupHeader groupHeader = new GroupHeader();
             String matchingRelatedName = relatedList.stream()
@@ -442,6 +477,10 @@ public class DocumentService {
                     .findFirst()
                     .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
             groupHeader.setRelated_Name(matchingRelatedName);
+
+            Long totalRow = listData.stream().filter(r -> r.getRelated_Name().equals(reNo))
+                    .map(DocumentAudit::getDocNo).count();
+            groupHeader.setRelated_amt(String.valueOf(totalRow));
             headers.add(groupHeader);
             resDataItems = new ArrayList<>();
             for (DocumentAudit rspList : listData) {
@@ -484,12 +523,14 @@ public class DocumentService {
                 message.setResMgs(Constant.msgDone);
                 result.setMessage(message);
                 result.setGroupHeader(headers);
+                result.setGroupHeaderTotal(HeaderTotal);
                 return result;
             } else {
                 message.setResCode(Constant.codeDataNotFound);
                 message.setResMgs(Constant.msgDataNotFound);
                 result.setMessage(message);
                 result.setGroupHeader(headers);
+                result.setGroupHeaderTotal(HeaderTotal);
                 return result;
             }
         }catch (Exception e){
@@ -694,7 +735,7 @@ public class DocumentService {
 
                 // Check if relatedShowList is empty or null
                 List<RelatedShow> relatedShows = relatedShowList.stream()
-                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
                         .collect(Collectors.toList());
                 audit.setRelatedShowList02(relatedShows);
             }
@@ -738,7 +779,21 @@ public class DocumentService {
         documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
         listData = documentImpl.getShareDocumentSubject(documentReq);
 
+        List<Related> relatedList = documentImpl.getRsplistRelated();
+        List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
         try {
+            for (DocumentAudit audit : listData) {
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedList(matchingRelatedItems);
+
+                // Check if relatedShowList is empty or null
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
+            }
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
@@ -788,7 +843,7 @@ public class DocumentService {
 
                 // Check if relatedShowList is empty or null
                 List<RelatedShow> relatedShows = relatedShowList.stream()
-                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
                         .collect(Collectors.toList());
                 audit.setRelatedShowList02(relatedShows);
             }
@@ -830,7 +885,21 @@ public class DocumentService {
         List<Login> getCheckUserList = loginService.CheckUser(documentReq);
         documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
         listData = documentImpl.getShareDocumentDoctype(documentReq);
+        List<Related> relatedList = documentImpl.getRsplistRelated();
+        List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
         try {
+            for (DocumentAudit audit : listData) {
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
+                        .collect(Collectors.toList());
+                audit.setRelatedList(matchingRelatedItems);
+
+                // Check if relatedShowList is empty or null
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
+            }
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);

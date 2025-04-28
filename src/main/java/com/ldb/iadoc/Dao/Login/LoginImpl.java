@@ -6,10 +6,8 @@ import com.ldb.iadoc.Model.Branch.ComboBand.ComboBranch;
 import com.ldb.iadoc.Model.Department.Dept;
 import com.ldb.iadoc.Model.Department.DeptReq;
 import com.ldb.iadoc.Model.Document.DocumentReq;
-import com.ldb.iadoc.Model.Login.Login;
+import com.ldb.iadoc.Model.Login.*;
 import com.ldb.iadoc.Model.Login.LoginInfo.LoginChangPwd;
-import com.ldb.iadoc.Model.Login.LoginReq;
-import com.ldb.iadoc.Model.Login.SignupReq;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSection;
 import com.ldb.iadoc.Model.Section.ComboSection.ComboSectionReq;
 import com.ldb.iadoc.Model.Section.ExcusiveSection.ComboSectionExReq;
@@ -39,7 +37,7 @@ public class LoginImpl implements LoginDao{
     String SQL="";
     @Override
     public List<Login> login(LoginReq loginReq) {
-        SQL="SELECT * FROM V_LOGIN where USER_NAME='"+loginReq.getUserName()+"' and USER_PWD='"+loginReq.getPassWord()+"'";
+        SQL="SELECT * FROM IADOC.V_LOGIN where USER_NAME='"+loginReq.getUserName()+"' and USER_PWD='"+loginReq.getPassWord()+"'";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
             @Override
             public Login mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -67,10 +65,10 @@ public class LoginImpl implements LoginDao{
     @Override
     public List<Login> getShowUserInfo(LoginReq loginReq) {
         if(loginReq.getUserType().equals("A")){
-            SQL="SELECT * FROM V_LOGIN";
+            SQL="SELECT * FROM IADOC.V_LOGIN";
         }
         else {
-            SQL="SELECT * FROM V_LOGIN where USER_NAME='"+loginReq.getUserName()+"'";
+            SQL="SELECT * FROM IADOC.V_LOGIN where USER_NAME='"+loginReq.getUserName()+"'";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
             @Override
@@ -386,13 +384,15 @@ public class LoginImpl implements LoginDao{
 
     @Override
     public int saveBranch(BranchReq branchReq) {
-        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type) values  (?,?,?,?,?,'1')";
+        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type,status) values  (?,?,?,?,?,'1',?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 branchReq.getBranchCode(),
                 branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
-                branchReq.getBrType()
+                branchReq.getBrType(),
+                branchReq.getStatus()
+
         });
     }
     @Override
@@ -409,13 +409,14 @@ public class LoginImpl implements LoginDao{
 
     @Override
     public int updateBranch(BranchReq branchReq) {
-        SQL="update BRANCH set BRANCH_CODE=?,BRANCH_NAME=?,BRANCH_NAME_LAO=?,LOCATION=?,BRANCH_TYPE=? where ID=?";
+        SQL="update BRANCH set BRANCH_CODE=?,BRANCH_NAME=?,BRANCH_NAME_LAO=?,LOCATION=?,BRANCH_TYPE=?,status=? where ID=?";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 branchReq.getBranchCode(),
                 branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
                 branchReq.getBrType(),
+                branchReq.getStatus(),
                 branchReq.getID()
         });
     }
@@ -430,29 +431,24 @@ public class LoginImpl implements LoginDao{
     @Override
     public List<Branch> getBranch(BranchReq branchReq) {
         if(branchReq.getBranchCode() == null || branchReq.getBranchCode() == ""){
-            SQL="select * from BRANCH where  type='1' order by ID asc";
+            SQL="select * from BRANCH where  type='1'   order by ID asc";
             System.out.println("SQL:"+SQL);
         }else {
             SQL="select * from BRANCH where BRANCH_CODE='"+branchReq.getBranchCode() +"' and  type='1' order by ID asc";
             System.out.println("SQL:"+SQL);
         }
-        return IADOCJdbcTemplate.query(SQL, new RowMapper<Branch>() {
-            @Override
-            public Branch mapRow(ResultSet rs, int rowNum) throws SQLException {
-                Branch tr = new Branch();
-                tr.setID(rs.getString("BRANCH_CODE"));
-             //   tr.setBranchCode(rs.getString("BRANCH_CODE"));
-                tr.setBrName(rs.getString("BRANCH_NAME"));
-                tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
-                tr.setLocation(rs.getString("LOCATION"));
-                tr.setBrType(rs.getString("BRANCH_TYPE"));
-                return tr;
-            }
+        return IADOCJdbcTemplate.query(SQL, (rs, rowNum) -> {
+            Branch tr = new Branch();
+            tr.setID(rs.getString("ID")); // Replace with rs.getString if ID is VARCHAR
+            tr.setBranchCode(rs.getString("BRANCH_CODE"));
+            tr.setBrName("-");
+            tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
+            tr.setLocation(rs.getString("LOCATION"));
+            tr.setBrType(rs.getString("BRANCH_TYPE"));
+            tr.setStatus(rs.getString("STATUS"));
+            return tr;
         });
     }
-
-
-
     @Override
     public List<Branch> getBranchExcutive(BranchReq branchReq) {
         if(branchReq.getBranchCode() == null || branchReq.getBranchCode() == ""){
@@ -469,7 +465,7 @@ public class LoginImpl implements LoginDao{
                 Branch tr = new Branch();
                 tr.setID(rs.getString("ID"));
                 tr.setBranchCode(rs.getString("BRANCH_CODE"));
-                tr.setBrName(rs.getString("BRANCH_NAME"));
+                tr.setBrName("-");
                 tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
                 tr.setLocation(rs.getString("LOCATION"));
                 tr.setBrType(rs.getString("BRANCH_TYPE"));
@@ -481,6 +477,22 @@ public class LoginImpl implements LoginDao{
     @Override
     public List<ComboBranch> getComboxBranch() {
             SQL="select * from V_COMBOBRANCH order by ORDERBY asc";
+            System.out.println("SQL:"+SQL);
+        return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
+            @Override
+            public ComboBranch mapRow(ResultSet rs, int rowNum) throws SQLException {
+                ComboBranch tr = new ComboBranch();
+                tr.setBranchCode(rs.getString("BRANCH_CODE"));
+                tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
+                return tr;
+            }
+        });
+    }
+
+
+    @Override
+    public List<ComboBranch> getComboxBranchStatus() {
+            SQL="select * from V_COMBOBRANCH where STATUS !='Disabled' order by ORDERBY asc";
             System.out.println("SQL:"+SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
             @Override
@@ -549,8 +561,179 @@ public class LoginImpl implements LoginDao{
         });
     }
     @Override
+    public int saveLoginLog(List<Login> logReq) {
+        login_log loginLog = new login_log();
+        loginLog.setUserId(logReq.get(0).getUserName());
+        loginLog.setFullName(logReq.get(0).getFullNameLa());
+        loginLog.setTel(logReq.get(0).getTel());
+        loginLog.setEmail(logReq.get(0).getEmail());
+        loginLog.setSecCode(logReq.get(0).getSecCode());
+        loginLog.setSecName(logReq.get(0).getSecDescLa());
+        SQL="insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO,CREATEDATE,TYPE) values(?,?,?,?,?,?,sysdate,'login') ";
+        return IADOCJdbcTemplate.update(SQL,new Object[]{
+                loginLog.getUserId(),
+                loginLog.getFullName(),
+                loginLog.getTel(),
+                loginLog.getEmail(),
+                loginLog.getSecCode(),
+                loginLog.getSecName()
+
+        });
+    }
+
+    @Override
+    public int saveDoLog(login_log logReq) {
+        login_log loginLog = new login_log();
+        loginLog.setUserId(logReq.getUserId());
+        loginLog.setFullName(logReq.getFullName());
+        loginLog.setTel(logReq.getTel());
+        loginLog.setEmail(logReq.getEmail());
+        loginLog.setSecCode(logReq.getSecCode());
+        loginLog.setSecName(logReq.getSecName());
+        SQL="insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO," +
+                "CREATEDATE,TYPE,DOCNO) values(?,?,?,?,?,?,sysdate,'doc',?) ";
+        return IADOCJdbcTemplate.update(SQL,new Object[]{
+                loginLog.getUserId(),
+                loginLog.getFullName(),
+                loginLog.getTel(),
+                loginLog.getEmail(),
+                loginLog.getSecCode(),
+                loginLog.getSecName(),
+                loginLog.getDocNo()
+
+        });
+    }
+
+    @Override
+    public List<VWStatistic_login> getStatisticLogin(VWStatisticReq vwStatisticReq) {
+
+        String userType = vwStatisticReq.getUserType();
+        String userTypConSql ="";
+        String orderBy =" order by AMT desc";
+
+        if("A".equals(userType)){
+            userTypConSql  = " AND USER_ID is not null";
+        }else {
+            userTypConSql  = " AND USER_ID is null";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("select * from V_STATISTIC_LOGIN where type !='doc' and 1=1 ");
+        sb.append(userTypConSql);
+        sb.append(orderBy);
+        String sql = sb.toString();
+        return IADOCJdbcTemplate.query(sql, new RowMapper<VWStatistic_login>() {
+            @Override
+            public VWStatistic_login mapRow(ResultSet rs, int rowNum) throws SQLException {
+                VWStatistic_login tr = new VWStatistic_login();
+                tr.setUserId(rs.getString("USER_ID"));
+                tr.setFullName(rs.getString("FULLNAME_LA"));
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecName(rs.getString("SEC_DESC_LAO"));
+                tr.setAmt(rs.getString("AMT"));
+                return tr;
+            }
+        });
+    }
+    @Override
+    public List<VWStatistic_login> dologStatistic(VWStatisticReq vwStatisticReq) {
+        String userType = vwStatisticReq.getUserType();
+        String userTypConSql ="";
+        String orderBy =" order by AMT desc";
+        if("A".equals(userType)){
+            userTypConSql  = " AND USER_ID is not null";
+        }else {
+            userTypConSql  = " AND USER_ID is null";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("select * from V_STATISTIC_LOGIN where type = 'doc' and  1=1 ");
+        sb.append(userTypConSql);
+        sb.append(orderBy);
+        String sql = sb.toString();
+        return IADOCJdbcTemplate.query(sql, new RowMapper<VWStatistic_login>() {
+            @Override
+            public VWStatistic_login mapRow(ResultSet rs, int rowNum) throws SQLException {
+                VWStatistic_login tr = new VWStatistic_login();
+                tr.setUserId(rs.getString("USER_ID"));
+                tr.setFullName(rs.getString("FULLNAME_LA"));
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecName(rs.getString("SEC_DESC_LAO"));
+                tr.setAmt(rs.getString("AMT"));
+                return tr;
+            }
+        });
+    }
+    @Override
+    public List<login_log> dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq) {
+
+        String userType = vwStatisticReq.getUserType();
+        String userTypConSql ="";
+        String orderBy =" order by ID desc";
+        if("A".equals(userType)){
+            userTypConSql  = " AND USER_ID is not null";
+        }else {
+            userTypConSql  = " AND USER_ID is null";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("select ID, USER_ID, FULLNAME_LA, TEL, EMAIL, SEC_CODE, SEC_DESC_LAO,\n" +
+                "to_char(CREATEDATE,'DD/MM/YYYY') CREATEDATE, TYPE from LOGIN_LOG  " +
+                "where type = 'doc' and USER_ID='"+vwStatisticReq.getUserName()+"' and 1=1 ");
+        sb.append(userTypConSql);
+        sb.append(orderBy);
+        String sql = sb.toString();
+        return IADOCJdbcTemplate.query(sql, new RowMapper<login_log>() {
+            @Override
+            public login_log mapRow(ResultSet rs, int rowNum) throws SQLException {
+                login_log tr = new login_log();
+                tr.setUserId(rs.getString("USER_ID"));
+                tr.setFullName(rs.getString("FULLNAME_LA"));
+                tr.setTel(rs.getString("TEL"));
+                tr.setEmail(rs.getString("EMAIL"));
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecName(rs.getString("SEC_DESC_LAO"));
+                tr. setCreateDate(rs.getString("CREATEDATE"));
+                return tr;
+            }
+        });
+    }
+
+    @Override
+    public List<login_log> dologStatisticDetailsLogin(VWStatisticReq vwStatisticReq) {
+
+        String userType = vwStatisticReq.getUserType();
+        String userTypConSql ="";
+        String orderBy =" order by ID desc";
+
+        if("A".equals(userType)){
+            userTypConSql  = " AND USER_ID is not null";
+        }else {
+            userTypConSql  = " AND USER_ID is null";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("select ID, USER_ID, FULLNAME_LA, TEL, EMAIL, SEC_CODE, SEC_DESC_LAO,\n" +
+                "to_char(CREATEDATE,'DD/MM/YYYY') CREATEDATE, TYPE from LOGIN_LOG" +
+                "  where type = 'login' and USER_ID='"+vwStatisticReq.getUserName()+"' and 1=1 ");
+        sb.append(userTypConSql);
+        sb.append(orderBy);
+        String sql = sb.toString();
+        return IADOCJdbcTemplate.query(sql, new RowMapper<login_log>() {
+            @Override
+            public login_log mapRow(ResultSet rs, int rowNum) throws SQLException {
+                login_log tr = new login_log();
+                tr.setUserId(rs.getString("USER_ID"));
+                tr.setFullName(rs.getString("FULLNAME_LA"));
+                tr.setTel(rs.getString("TEL"));
+                tr.setEmail(rs.getString("EMAIL"));
+                tr.setSecCode(rs.getString("SEC_CODE"));
+                tr.setSecName(rs.getString("SEC_DESC_LAO"));
+                tr. setCreateDate(rs.getString("CREATEDATE"));
+                return tr;
+            }
+        });
+    }
+
+    @Override
     public List<Login> CheckUser(DocumentReq documentReq) {
-        SQL="select * from V_LOGIN where USER_ID= '"+documentReq.getMarkerId()+"'";
+        SQL="select * from IADOC.V_LOGIN where USER_ID= '"+documentReq.getMarkerId()+"'";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
             @Override
             public Login mapRow(ResultSet rs, int rowNum) throws SQLException {

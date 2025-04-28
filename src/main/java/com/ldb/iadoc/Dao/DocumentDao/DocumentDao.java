@@ -1,22 +1,20 @@
 package com.ldb.iadoc.Dao.DocumentDao;
 
-import com.ldb.iadoc.Model.Document.Document;
-import com.ldb.iadoc.Model.Document.DocumentAudit;
-import com.ldb.iadoc.Model.Document.DocumentReq;
-import com.ldb.iadoc.Model.Document.docSerachReq;
+import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Share.ShareReq;
 
 import java.text.ParseException;
 import java.util.List;
 
 public interface DocumentDao {
+    public List<KeyReq> getMaxKey();
     public int updateDocExcutive(DocumentReq documentReq) throws ParseException;
     public List<DocumentAudit> getWaitListCheckExcutive(DocumentReq documentReq);
     public int SaveDocumentExcutive(DocumentReq documentReq) throws ParseException;
     public int rejectDocument(DocumentReq documentReq);
     public int saveSharingDo(DocumentReq documentReq);
     public int ReadData(DocumentReq documentReq);
-    public int SaveDocument(DocumentReq documentReq) throws ParseException;
+    public int SaveDocument(DocumentReq documentReq,String keyDocNo) throws ParseException;
     public int UpdateDocument(DocumentReq documentReq);
     public int DelDocument(DocumentReq documentReq);
     List<Document> getDocument(DocumentReq documentReq);

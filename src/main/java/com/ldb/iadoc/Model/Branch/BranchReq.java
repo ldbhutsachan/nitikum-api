@@ -16,6 +16,7 @@ public class BranchReq {
     private String brNameLa;
     private String location;
     private String brType;
+    private String status;
     private String underBr;
     private String iD;
 }
