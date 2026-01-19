@@ -106,7 +106,8 @@ public class DocumentService {
         return  result;
     }
     //***************************************update document ***********************************************************
-    public ReponeRes updateDocument(DocumentReq documentReq,String filesLaoPDF,String  filesEnPDF,String keyDocNo) throws ParseException {
+    public ReponeRes updateDocument(DocumentReq documentReq,String filesLaoPDF,
+                                    String  filesEnPDF,String keyDocNo) throws ParseException {
 
         ReponeRes result = new ReponeRes();
         Message message = new Message();
@@ -115,12 +116,11 @@ public class DocumentService {
         if(documentReq.getDocDate().equals("")){
             documentReq.setDocDate(documentReq.getDocDate());
         }else {
-            SimpleDateFormat inputDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH); // Updated to match input format
+            SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH); // Updated input format
             Date inputDate = inputDateFormat.parse(documentReq.getDocDate()); // Parse the input date
 
             SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH); // Desired output format
             String outputDateStr = outputDateFormat.format(inputDate); // Format the parsed date
-
             documentReq.setDocDate(outputDateStr); // Update the documentReq object
 
         }
@@ -790,7 +790,7 @@ public class DocumentService {
 
                 // Check if relatedShowList is empty or null
                 List<RelatedShow> relatedShows = relatedShowList.stream()
-                        .filter(r -> r.getRelatedShowDocNo().equals(audit.getDocNo()))
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
                         .collect(Collectors.toList());
                 audit.setRelatedShowList02(relatedShows);
             }
@@ -890,7 +890,7 @@ public class DocumentService {
         try {
             for (DocumentAudit audit : listData) {
                 List<Related> matchingRelatedItems = relatedList.stream()
-                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
+                        .filter(r -> r.getRelatedId().equals(audit.getDocNo()))
                         .collect(Collectors.toList());
                 audit.setRelatedList(matchingRelatedItems);
 

@@ -374,7 +374,7 @@ public class LoginImpl implements LoginDao{
                 tr.setDeptDesc(rs.getString("DEPT_DESC"));
                 tr.setDeptLao(rs.getString("DEPT_DESC_LAO"));
                 tr.setBranchCode(rs.getString("BRANCHCODE"));
-                tr.setBranchNameEn(rs.getString("BRANCH_NAME"));
+                tr.setBranchNameEn("-");
                 tr.setBranchNameLa(rs.getString("BRANCH_NAME_LAO"));
                 return tr;
             }
@@ -384,10 +384,10 @@ public class LoginImpl implements LoginDao{
 
     @Override
     public int saveBranch(BranchReq branchReq) {
-        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type,status) values  (?,?,?,?,?,'1',?)";
+        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type,status) values  (?,?,?,?,'1',?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 branchReq.getBranchCode(),
-                branchReq.getBrName(),
+               // branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
                 branchReq.getBrType(),
@@ -397,10 +397,10 @@ public class LoginImpl implements LoginDao{
     }
     @Override
     public int saveBranchExcutive(BranchReq branchReq) {
-        SQL="insert into BRANCH (BRANCH_CODE,BRANCH_NAME,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type) values  (?,?,?,?,?,'2')";
+        SQL="insert into BRANCH (BRANCH_CODE,LOCATION,BRANCH_TYPE,type) values  (?,?,?,'2')";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 branchReq.getBranchCode(),
-                branchReq.getBrName(),
+               // branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
                 branchReq.getBrType()
@@ -409,10 +409,10 @@ public class LoginImpl implements LoginDao{
 
     @Override
     public int updateBranch(BranchReq branchReq) {
-        SQL="update BRANCH set BRANCH_CODE=?,BRANCH_NAME=?,BRANCH_NAME_LAO=?,LOCATION=?,BRANCH_TYPE=?,status=? where ID=?";
+        SQL="update BRANCH set BRANCH_CODE=?,BRANCH_NAME_LAO=?,LOCATION=?,BRANCH_TYPE=?,status=? where ID=?";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
                 branchReq.getBranchCode(),
-                branchReq.getBrName(),
+               // branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
                 branchReq.getBrType(),
@@ -431,7 +431,7 @@ public class LoginImpl implements LoginDao{
     @Override
     public List<Branch> getBranch(BranchReq branchReq) {
         if(branchReq.getBranchCode() == null || branchReq.getBranchCode() == ""){
-            SQL="select * from BRANCH where  type='1'   order by ID asc";
+            SQL="select * from BRANCH where  type='1'  order by ORDERBY asc";
             System.out.println("SQL:"+SQL);
         }else {
             SQL="select * from BRANCH where BRANCH_CODE='"+branchReq.getBranchCode() +"' and  type='1' order by ID asc";

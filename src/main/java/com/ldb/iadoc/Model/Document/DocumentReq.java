@@ -43,13 +43,9 @@ public class DocumentReq {
     private String rejectBy;
     private String readBy;
     private String rejectDate;
-
     private String userType;
-
     private String startDate;
     private String endDate;
-
-
     private String docConnect;
 
 }
