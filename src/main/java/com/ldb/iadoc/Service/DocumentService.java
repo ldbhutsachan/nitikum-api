@@ -709,6 +709,13 @@ public class DocumentService {
         }
         return result;
     }
+    public DocumentAuditRes getShareDocumentGen(DocumentReq documentReq){
+        DocumentAuditRes result = new DocumentAuditRes();
+        List<DocumentAudit> listData = new ArrayList<>();
+        listData = documentImpl.getShareDocumentGEN(documentReq);
+        return result;
+    }
+
     public DocumentAuditRes getShareDocument(DocumentReq documentReq){
         Message message = new Message();
         DocumentAuditRes result = new DocumentAuditRes();

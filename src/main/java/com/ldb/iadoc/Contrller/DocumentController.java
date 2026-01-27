@@ -18,12 +18,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.lang.model.util.Elements;
 import javax.xml.crypto.Data;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @CrossOrigin
@@ -60,6 +60,16 @@ public class DocumentController {
         System.out.println("markerId:"+documentReq.getMarkerId());
         DocumentAuditRes result =new DocumentAuditRes();
         result = documentService.getShareDocument(documentReq);
+        return result;
+    }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Share/genPdf")
+    public DocumentAuditRes genPdf(@RequestBody DocumentReq documentReq){
+        log.info("====================================================>getShareDocument controller<=========================");
+        System.out.println("markerId:"+documentReq.getMarkerId());
+        DocumentAuditRes result =new DocumentAuditRes();
+        result = documentService.getShareDocumentGen(documentReq);
         return result;
     }
     //----------------------------Report
@@ -163,13 +173,6 @@ public class DocumentController {
                     @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
         log.info("====================================================>SaveDoc controller<=========================");
-        log.info("show fileEn:"+filesEn);
-        log.info("show fileLA:"+filesLao);
-        log.info("show related_No:"+related_No);
-
-        Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
-        String namefile = formatter.format(date);
         ReponeRes result = new ReponeRes();
         try{
             DocumentReq data = new DocumentReq();
@@ -201,38 +204,83 @@ public class DocumentController {
             data.setMarkerId(markerId);
             data.setSharingType(sharingType);
             data.setDetails(details);
-            String fileNameEn = "";
-            String fileNameLa = "";
+
             List<String> fileNamesEn = new ArrayList<>();
             List<String> fileNamesLa = new ArrayList<>();
             //==========================ກວດສອບ ໄຟທີ 1==================================
-            if(filesEn == null){
+            if (filesEn == null) {
                 log.warn("************* file EN is null ****************");
                 data.setDocPath(old_image1);
-            }
-            else if(filesEn != null) {
-                Arrays.asList(filesEn).stream().forEach(file -> {
-                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
-                });
-                log.info("Uploaded the files successfully: "+ fileNamesEn);
-                fileNameEn = StringUtils.join(fileNamesEn, ',');
-                data.setDocPath(fileNameEn);
+            } else {
+                log.info("************* processing EN files ****************");
+                for (MultipartFile file : filesEn) {
+                    try {
+                        UUID uuid = UUID.randomUUID();
+
+                        // Step 1: Save original file temporarily
+                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        targetFile.getParentFile().mkdirs(); // ensure directory exists
+                        file.transferTo(targetFile);
+
+                        // Step 2: Generate watermarked PDF
+                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+
+                        // Step 3: Upload generated file
+                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+
+                    } catch (Exception e) {
+                        log.error("Error processing EN file {}", file.getOriginalFilename(), e);
+                    }
+                }
+
+                if (fileNamesEn.isEmpty()) {
+                    data.setDocPath(null);
+                } else {
+                    data.setDocPath(String.join(",", fileNamesEn));
+                }
+
             }
          //   ==========================ກວດສອບ ໄຟທີ 2==================================
-            if(filesLao == null ){
+            if (filesLao == null) {
                 log.warn("************* file LAO is null ****************");
                 data.setDocPathLa(old_image2);
-            }else if(filesLao != null){
-                log.warn("************* file LAO no null ****************");
-                Arrays.asList(filesLao).stream().forEach(file -> {
-                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
-                });
-                fileNameLa = StringUtils.join(fileNamesLa, ',');
-                data.setDocPathLa(fileNameLa);
+            } else {
+                log.info("************* processing Lao files ****************");
+                for (MultipartFile file : filesLao) {
+                    try {
+                        UUID uuid = UUID.randomUUID();
+
+                        // Step 1: Save original file temporarily
+                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        targetFile.getParentFile().mkdirs(); // ensure directory exists
+                        file.transferTo(targetFile);
+
+                        // Step 2: Generate watermarked PDF
+                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+
+                        // Step 3: Upload generated file
+                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+
+                    } catch (Exception e) {
+                        log.error("Error processing Lao file {}", file.getOriginalFilename(), e);
+                    }
+                }
+
+                if (fileNamesLa.isEmpty()) {
+                    data.setDocPathLa(null);
+                } else {
+                    data.setDocPathLa(String.join(",", fileNamesLa));
+                }
+
             }
+
+
             List<KeyReq> rspListData = documentService.getMaxKey();
             String keyDocNo  = rspListData.get(0).getKeyDocNo();
             result = documentService.SaveDocument(data,keyDocNo);
+
         }catch (Exception e){
             if (e instanceof NullPointerException) {
                 System.out.println("NullPointerException occurred");
@@ -318,30 +366,78 @@ public class DocumentController {
             String fileNameLa = "";
             List<String> fileNamesEn = new ArrayList<>();
             List<String> fileNamesLa = new ArrayList<>();
+
             //==========================ກວດສອບ ໄຟທີ 1==================================
-            if(filesEn == null){
+            if (filesEn == null) {
                 log.warn("************* file EN is null ****************");
                 data.setDocPath(old_image1);
-            }
-            else if(filesEn != null) {
-                Arrays.asList(filesEn).stream().forEach(file -> {
-                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
-                });
-                fileNameEn = StringUtils.join(fileNamesEn, ',');
-                data.setDocPath(fileNameEn);
+            } else {
+                log.info("************* processing EN files ****************");
+                for (MultipartFile file : filesEn) {
+                    try {
+                        UUID uuid = UUID.randomUUID();
+
+                        // Step 1: Save original file temporarily
+                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        targetFile.getParentFile().mkdirs(); // ensure directory exists
+                        file.transferTo(targetFile);
+
+                        // Step 2: Generate watermarked PDF
+                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+
+                        // Step 3: Upload generated file
+                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+
+                    } catch (Exception e) {
+                        log.error("Error processing EN file {}", file.getOriginalFilename(), e);
+                    }
+                }
+
+                if (fileNamesEn.isEmpty()) {
+                    data.setDocPath(null);
+                } else {
+                    data.setDocPath(String.join(",", fileNamesEn));
+                }
+
             }
             //   ==========================ກວດສອບ ໄຟທີ 2==================================
-            if(filesLao == null ){
+            if (filesLao == null) {
                 log.warn("************* file LAO is null ****************");
                 data.setDocPathLa(old_image2);
-            }else if(filesLao != null){
-                log.warn("************* file LAO no null ****************");
-                Arrays.asList(filesLao).stream().forEach(file -> {
-                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
-                });
-                fileNameLa = StringUtils.join(fileNamesLa, ',');
-                data.setDocPathLa(fileNameLa);
+            } else {
+                log.info("************* processing Lao files ****************");
+                for (MultipartFile file : filesLao) {
+                    try {
+                        UUID uuid = UUID.randomUUID();
+
+                        // Step 1: Save original file temporarily
+                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        targetFile.getParentFile().mkdirs(); // ensure directory exists
+                        file.transferTo(targetFile);
+
+                        // Step 2: Generate watermarked PDF
+                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+
+                        // Step 3: Upload generated file
+                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+
+                    } catch (Exception e) {
+                        log.error("Error processing Lao file {}", file.getOriginalFilename(), e);
+                    }
+                }
+
+                if (fileNamesLa.isEmpty()) {
+                    data.setDocPathLa(null);
+                } else {
+                    data.setDocPathLa(String.join(",", fileNamesLa));
+                }
+
             }
+
+
+
 
             List<KeyReq> rspListData = documentService.getMaxKey();
             String keyDocNo  = rspListData.get(0).getKeyDocNo();

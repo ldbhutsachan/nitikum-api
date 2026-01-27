@@ -6,6 +6,7 @@ import com.ldb.iadoc.Model.GroupHeaderReq;
 import com.ldb.iadoc.Model.Relation.Related;
 import com.ldb.iadoc.Model.Relation.RelatedShow;
 import com.ldb.iadoc.Model.Share.ShareReq;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,10 @@ import java.util.Arrays;
 
 import java.util.List;
 @Service
+@RequiredArgsConstructor
 public class DocumentImpl implements DocumentDao {
-    public static final Logger log = LogManager.getLogger(DocumentDao.class);
+    private final LoginController loginController;
+    public  final Logger log = LogManager.getLogger(DocumentDao.class);
 
     @Autowired
     @Qualifier("IADOCJdbcTemplate")
@@ -518,7 +521,7 @@ public class DocumentImpl implements DocumentDao {
 
     @Override
     public List<DocumentAudit> getWaitListCheckByUser(DocumentReq documentReq) {
-        SQL="select * from V_WAIT_DOCUMENT_LAW where type='1'  order by ID asc";
+        SQL="select * from V_WAIT_DOCUMENT_LAW where type='1'  order by ID desc";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -599,6 +602,7 @@ public class DocumentImpl implements DocumentDao {
     }
     @Override
     public List<DocumentAudit> getShareDocument(DocumentReq documentReq) {
+
         // Initialize SQL query
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT * FROM V_DOCUMENT_FOR_ADMIN WHERE 1=1");
@@ -612,6 +616,12 @@ public class DocumentImpl implements DocumentDao {
             sb.append(" AND (USER_NAME = ? OR SHARING_TYPE = ?)");
         } else {
             sb.append(" AND (USER_NAME = ? OR SHARING_TYPE = ?)");
+        }
+
+        if(documentReq.getSes_status().equals("N")){
+            sb.append(" AND SES_STATUS ='N' ");
+        }else {
+            sb.append(" AND SES_STATUS ='O' ");
         }
 
         // Append ORDER BY clause
@@ -658,6 +668,46 @@ public class DocumentImpl implements DocumentDao {
                 tr.setCreateBy(rs.getString("createBy"));
                 tr.setDocKey(rs.getString("DOC_KEY"));
                 tr.setAmt(rs.getLong("amt"));
+                return tr;
+            }
+        });
+    }
+
+
+    public List<DocumentAudit> getShareDocumentGEN(DocumentReq documentReq) {
+        String sql = "SELECT DOC_PATH_LA, DOC_PATH FROM DOC_CREATE";
+
+        return IADOCJdbcTemplate.query(sql, new RowMapper<DocumentAudit>() {
+            @Override
+            public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
+                DocumentAudit tr = new DocumentAudit();
+
+                String docPathLa = rs.getString("DOC_PATH_LA");
+                String docPathEn = rs.getString("DOC_PATH");
+                tr.setDocPathLa(docPathLa);
+
+                // Safely extract filenames
+                String fileNameLO = (docPathLa != null && docPathLa.contains("/"))
+                        ? docPathLa.substring(docPathLa.lastIndexOf('/') + 1)
+                        : "NoFileLO.pdf";
+
+                String fileNameEn = (docPathEn != null && docPathEn.contains("/"))
+                        ? docPathEn.substring(docPathEn.lastIndexOf('/') + 1)
+                        : "NoFileEN.pdf";
+
+                System.out.println(fileNameLO);
+                System.out.println(fileNameEn);
+
+                try {
+                    log.info("===start gen EN=====");
+                    // Generate watermarked Lao version
+                    loginController.genPDF2(docPathLa, "lo/" + fileNameLO);
+                    // Generate watermarked English version
+                    loginController.genPDF2(docPathEn, "en/" + fileNameEn);
+                } catch (Exception e) {
+                    log.error("Error generating PDF: ", e);
+                }
+
                 return tr;
             }
         });
@@ -835,28 +885,30 @@ public class DocumentImpl implements DocumentDao {
         });
     }
     public List<DocumentAudit> getShareDocumentSubject(DocumentReq documentReq) {
+
+
         String userType= documentReq.getUserType();
         if(userType.equals("A")){
             log.info("userType:"+documentReq.getUserType());
             SQL="select * from V_DOCUMENT_FOR_ADMIN " +
-                    "where SubjectName like'%"+documentReq.getSubjectName()+"%' or " +
+                    "where SES_STATUS = '"+documentReq.getSes_status()+"'   and  SubjectName like'%"+documentReq.getSubjectName()+"%' or " +
                     "DOC_NO like'%"+documentReq.getSubjectName()+"%' ";
             log.info("SQL1:"+SQL);
         }else if(userType.equals("M")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where USER_ALLOW ='"+documentReq.getMarkerId()+"' " +
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS = '"+documentReq.getSes_status()+"'   and USER_ALLOW ='"+documentReq.getMarkerId()+"' " +
                     "OR SubjectName like'%"+documentReq.getSubjectName()+"%' or DOC_NO like'%"+documentReq.getSubjectName()+"%' ";
             log.info("SQL2:"+SQL);
         }
         else if(userType.equals("U")){
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where USER_ALLOW ='"+documentReq.getMarkerId()+"' " +
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS = '"+documentReq.getSes_status()+"'   and USER_ALLOW ='"+documentReq.getMarkerId()+"' " +
                     "OR SubjectName like'%"+documentReq.getSubjectName()+"%' or DOC_NO like'%"+documentReq.getSubjectName()+"%' ";
             log.info("SQL3:"+SQL);
         }
         else {
             log.info("userType:"+documentReq.getUserType());
-            SQL="select * from V_DOCUMENT_FOR_ADMIN where USER_ALLOW ='"+documentReq.getMarkerId()+"' " +
+            SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS = '"+documentReq.getSes_status()+"'   and USER_ALLOW ='"+documentReq.getMarkerId()+"' " +
                     "OR SubjectName like'%"+documentReq.getSubjectName()+"%' or DOC_NO like'%"+documentReq.getSubjectName()+"%'  ";
             log.info("SQL4:"+SQL);
         }
@@ -901,17 +953,6 @@ public class DocumentImpl implements DocumentDao {
      //   String orderbyData = "\n order by ID asc";
         String conSecCode = " ";
         String conUserType = " ";
-//        if("A".equals(userType)){
-//            conUserType = "\n ";
-//        }else if("M".equals(userType)){
-//            conUserType = "\n AND USER_ALLOW =' "+documentReq.getMarkerId()+"'";
-//        }
-//        else if("U".equals(userType)){
-//            conUserType = "\n AND USER_ALLOW is not null";
-//        }
-//        else {
-//            conUserType = "\n AND USER_ALLOW is not null";
-//        }
         if(secCode != null || secCode.equals(null)){
             conSecCode = "  AND (',' || RELETED_NAME || ',' LIKE '%,"+documentReq.getSecCode()+",%' ) ";
         }else
@@ -919,7 +960,7 @@ public class DocumentImpl implements DocumentDao {
             conSecCode = "";
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT * FROM V_DOCUMENT_FOR_ADMIN WHERE 1=1 ");
+        sb.append("SELECT * FROM V_DOCUMENT_FOR_ADMIN WHERE SES_STATUS='"+documentReq.getSes_status()+"' and  1=1 ");
         sb.append(conSecCode);
         sb.append(conUserType);
        // sb.append(orderbyData);
@@ -968,32 +1009,32 @@ public class DocumentImpl implements DocumentDao {
         if(userType.equals("A")){
             log.info("userType:"+documentReq.getUserType());
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  ";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and DOC_TYPE ='"+documentReq.getDocType()+"'  ";
             }else {
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' and RELETED_NAME = '"+related+"' ";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and DOC_TYPE ='"+documentReq.getDocType()+"' and RELETED_NAME = '"+related+"' ";
             }
         }else if(userType.equals("M")){
             log.info("userType:"+documentReq.getUserType());
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"' ";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and DOC_TYPE ='"+documentReq.getDocType()+"' ";
             }else {
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  and RELETED_NAME = '"+related+"' ";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and DOC_TYPE ='"+documentReq.getDocType()+"'  and RELETED_NAME = '"+related+"' ";
             }
         }
         else if(userType.equals("U")){
             log.info("userType:"+documentReq.getUserType());
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  ";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and DOC_TYPE ='"+documentReq.getDocType()+"'  ";
             }else {
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where  RELETED_NAME ='"+related+"' and DOC_TYPE ='"+documentReq.getDocType()+"'  ";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and RELETED_NAME ='"+related+"' and DOC_TYPE ='"+documentReq.getDocType()+"'  ";
             }
         }
         else {
             if(related.equals("") || related == null || related ==""){
-                SQL="select * from V_DOCUMENT_FOR_ADMIN where DOC_TYPE ='"+documentReq.getDocType()+"'  order by ID asc";
+                SQL="select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and DOC_TYPE ='"+documentReq.getDocType()+"'  order by ID asc";
             }else {
                 log.info("userType:" + documentReq.getUserType());
-                SQL = "select * from V_DOCUMENT_FOR_ADMIN where RELETED_NAME = '"+related+"' and DOC_TYPE ='" + documentReq.getDocType() + "' ";
+                SQL = "select * from V_DOCUMENT_FOR_ADMIN where SES_STATUS='"+documentReq.getSes_status()+"' and RELETED_NAME = '"+related+"' and DOC_TYPE ='" + documentReq.getDocType() + "' ";
             }
         }
         log.info("SQL 999:"+SQL);
