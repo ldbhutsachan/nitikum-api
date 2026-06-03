@@ -1,5 +1,5 @@
 package com.ldb.iadoc.Contrller;
-
+import org.springframework.beans.factory.annotation.Value;
 import com.ldb.iadoc.Model.DocType.DocTypeReq;
 import com.ldb.iadoc.Model.DocType.DocTypeRes;
 import com.ldb.iadoc.Model.Document.*;
@@ -35,6 +35,61 @@ public class DocumentController {
     @Autowired
     MediaUploadServiceImpl mediaUploadService;
 
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
+    /**
+     * Store uploads under a short, ASCII-only filename to avoid Linux filesystem
+     * limits (255 bytes) when users upload long Lao filenames.
+     */
+    private static String buildTempFileName(UUID uuid, String originalFilename) {
+        String ext = extractExtension(originalFilename);
+        if (ext.isEmpty()) {
+            return uuid.toString();
+        }
+        return uuid.toString() + "." + ext;
+    }
+
+    private static String extractExtension(String originalFilename) {
+        if (originalFilename == null) {
+            return "";
+        }
+        String name = originalFilename.trim();
+        int dot = name.lastIndexOf('.');
+        if (dot < 0 || dot == name.length() - 1) {
+            return "";
+        }
+        String ext = name.substring(dot + 1).toLowerCase(Locale.ROOT);
+        // Keep extension small and ASCII to avoid any path / header parsing surprises.
+        ext = ext.replaceAll("[^a-z0-9]", "");
+        if (ext.length() > 10) {
+            ext = ext.substring(0, 10);
+        }
+        return ext;
+    }
+
+    private static boolean isPdfFile(File file) {
+        // PDF must start with "%PDF-" (0x25 0x50 0x44 0x46 0x2D)
+        if (file == null || !file.isFile()) {
+            return false;
+        }
+        try {
+            Path p = file.toPath();
+            if (Files.size(p) < 5) {
+                return false;
+            }
+            byte[] header = new byte[5];
+            try (java.io.InputStream in = Files.newInputStream(p)) {
+                int read = in.read(header);
+                if (read < 5) {
+                    return false;
+                }
+            }
+            return header[0] == '%' && header[1] == 'P' && header[2] == 'D' && header[3] == 'F' && header[4] == '-';
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @CrossOrigin(origins = "*")
     @PostMapping("/Audit/getAuditListCheck")
@@ -215,19 +270,33 @@ public class DocumentController {
                 log.info("************* processing EN files ****************");
                 for (MultipartFile file : filesEn) {
                     try {
-                        UUID uuid = UUID.randomUUID();
-
                         // Step 1: Save original file temporarily
-                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        UUID uuid = UUID.randomUUID();
+                        String safeFileName = buildTempFileName(uuid, file.getOriginalFilename());
+                        // Step 1: Save original file temporarily
+
+                        File targetFile = new File(uploadDir, safeFileName);
                         targetFile.getParentFile().mkdirs(); // ensure directory exists
                         file.transferTo(targetFile);
 
-                        // Step 2: Generate watermarked PDF
-                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
-                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                        File fileToUpload = targetFile;
+                        String ext = extractExtension(file.getOriginalFilename());
+                        if ("pdf".equals(ext) && isPdfFile(targetFile)) {
+                            try {
+                                // Step 2: Generate watermarked PDF
+                                String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                                fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                            } catch (Exception watermarkEx) {
+                                // If the file isn't a valid PDF or iText fails, still upload original.
+                                log.warn("Watermark failed for EN file {}, uploading original instead", file.getOriginalFilename(), watermarkEx);
+                                fileToUpload = targetFile;
+                            }
+                        } else if ("pdf".equals(ext)) {
+                            log.warn("EN file has .pdf extension but is not a valid PDF header: {}", file.getOriginalFilename());
+                        }
 
-                        // Step 3: Upload generated file
-                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+                        // Step 3: Upload (generated PDF if watermark succeeded, otherwise original)
+                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid));
 
                     } catch (Exception e) {
                         log.error("Error processing EN file {}", file.getOriginalFilename(), e);
@@ -249,19 +318,33 @@ public class DocumentController {
                 log.info("************* processing Lao files ****************");
                 for (MultipartFile file : filesLao) {
                     try {
-                        UUID uuid = UUID.randomUUID();
-
                         // Step 1: Save original file temporarily
-                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        UUID uuid = UUID.randomUUID();
+                        String safeFileName = buildTempFileName(uuid, file.getOriginalFilename());
+                        // Step 1: Save original file temporarily
+
+                        File targetFile = new File(uploadDir, safeFileName);
                         targetFile.getParentFile().mkdirs(); // ensure directory exists
                         file.transferTo(targetFile);
 
-                        // Step 2: Generate watermarked PDF
-                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
-                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                        File fileToUpload = targetFile;
+                        String ext = extractExtension(file.getOriginalFilename());
+                        if ("pdf".equals(ext) && isPdfFile(targetFile)) {
+                            try {
+                                // Step 2: Generate watermarked PDF
+                                String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                                fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                            } catch (Exception watermarkEx) {
+                                log.warn("Watermark failed for Lao file {}, uploading original instead", file.getOriginalFilename(), watermarkEx);
+                                fileToUpload = targetFile;
+                            }
+                        } else if ("pdf".equals(ext)) {
+                            log.warn("Lao file has .pdf extension but is not a valid PDF header: {}", file.getOriginalFilename());
+                        }
 
-                        // Step 3: Upload generated file
-                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+                        // Step 3: Upload (generated PDF if watermark succeeded, otherwise original)
+                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid));
+
 
                     } catch (Exception e) {
                         log.error("Error processing Lao file {}", file.getOriginalFilename(), e);
@@ -375,19 +458,30 @@ public class DocumentController {
                 log.info("************* processing EN files ****************");
                 for (MultipartFile file : filesEn) {
                     try {
-                        UUID uuid = UUID.randomUUID();
-
                         // Step 1: Save original file temporarily
-                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        UUID uuid = UUID.randomUUID();
+                        String safeFileName = buildTempFileName(uuid, file.getOriginalFilename());
+                        // Step 1: Save original file temporarily
+
+                        File targetFile = new File(uploadDir, safeFileName);
                         targetFile.getParentFile().mkdirs(); // ensure directory exists
                         file.transferTo(targetFile);
 
-                        // Step 2: Generate watermarked PDF
-                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
-                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                        File fileToUpload = targetFile;
+                        String ext = extractExtension(file.getOriginalFilename());
+                        if ("pdf".equals(ext) && isPdfFile(targetFile)) {
+                            try {
+                                String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                                fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                            } catch (Exception watermarkEx) {
+                                log.warn("Watermark failed for EN file {}, uploading original instead", file.getOriginalFilename(), watermarkEx);
+                                fileToUpload = targetFile;
+                            }
+                        } else if ("pdf".equals(ext)) {
+                            log.warn("EN file has .pdf extension but is not a valid PDF header: {}", file.getOriginalFilename());
+                        }
 
-                        // Step 3: Upload generated file
-                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid));
 
                     } catch (Exception e) {
                         log.error("Error processing EN file {}", file.getOriginalFilename(), e);
@@ -409,19 +503,30 @@ public class DocumentController {
                 log.info("************* processing Lao files ****************");
                 for (MultipartFile file : filesLao) {
                     try {
-                        UUID uuid = UUID.randomUUID();
-
                         // Step 1: Save original file temporarily
-                        File targetFile = new File("C:/uploads/" + uuid + "-" + file.getOriginalFilename());
+                        UUID uuid = UUID.randomUUID();
+                        String safeFileName = buildTempFileName(uuid, file.getOriginalFilename());
+                        // Step 1: Save original file temporarily
+
+                        File targetFile = new File(uploadDir, safeFileName);
                         targetFile.getParentFile().mkdirs(); // ensure directory exists
                         file.transferTo(targetFile);
 
-                        // Step 2: Generate watermarked PDF
-                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
-                        File generatedFile = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                        File fileToUpload = targetFile;
+                        String ext = extractExtension(file.getOriginalFilename());
+                        if ("pdf".equals(ext) && isPdfFile(targetFile)) {
+                            try {
+                                String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                                fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                            } catch (Exception watermarkEx) {
+                                log.warn("Watermark failed for Lao file {}, uploading original instead", file.getOriginalFilename(), watermarkEx);
+                                fileToUpload = targetFile;
+                            }
+                        } else if ("pdf".equals(ext)) {
+                            log.warn("Lao file has .pdf extension but is not a valid PDF header: {}", file.getOriginalFilename());
+                        }
 
-                        // Step 3: Upload generated file
-                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(generatedFile, uuid));
+                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid));
 
                     } catch (Exception e) {
                         log.error("Error processing Lao file {}", file.getOriginalFilename(), e);

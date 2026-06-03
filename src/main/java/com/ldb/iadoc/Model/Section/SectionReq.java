@@ -15,4 +15,5 @@ public class SectionReq {
     private String secDesc;
     private String secDescLao;
     private String deptCode;
+    private String brCode;
 }

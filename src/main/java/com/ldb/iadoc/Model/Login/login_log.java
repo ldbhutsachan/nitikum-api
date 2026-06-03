@@ -20,4 +20,10 @@ public class login_log {
     private String docNo;
     private String createDate;
     private String type;
+
+    private String subjectName;
+    private String nameDesc;
+
+
+
 }

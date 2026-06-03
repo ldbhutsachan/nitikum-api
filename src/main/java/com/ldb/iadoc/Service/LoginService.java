@@ -409,6 +409,41 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
         }
         return result;
     }
+    public SectionRes getSectionData(SectionReq sectionReq){
+        Message message = new Message();
+        SectionRes result =new SectionRes();
+        List<Section> listData = loginImpls.getSectionData(sectionReq);
+        try{
+            if(listData.size() > 0){
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
     //===============================combo section======================
     public ComboSectionRes getComboxSections(ComboSectionReq sectionReq){
         Message message = new Message();
@@ -552,32 +587,42 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
         Message message = new Message();
         ReponeRes  result =new ReponeRes();
         int check = 0;
-        check= loginImpls.UpdatesSignUp(signupReq);
-        System.out.println("check:"+check);
-        try {
-            if (check > 0) {
-                message.setResCode(Constant.codeDone);
-                message.setResMgs(Constant.msgDoneUpdate);
-                result.setMessage(message);
-                return result;
-            }
+        String userType = signupReq.getUserType();
+        if (userType == null || userType.trim().isEmpty()) {
             message.setResCode(Constant.codeError);
             message.setResMgs(Constant.msgFailUpdate);
             result.setMessage(message);
-            return result;
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+        }
+        else {
+
+            check = loginImpls.UpdatesSignUp(signupReq);
+            System.out.println("check:" + check);
+            try {
+
+                if (check > 0) {
+                    message.setResCode(Constant.codeDone);
+                    message.setResMgs(Constant.msgDoneUpdate);
+                    result.setMessage(message);
+                    return result;
+                }
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgFailUpdate);
+                result.setMessage(message);
+                return result;
+            } catch (Exception e) {
+                if (e instanceof NullPointerException) {
+                    System.out.println("NullPointerException occurred");
+                } else if (e instanceof IllegalArgumentException) {
+                    System.out.println("IllegalArgumentException occurred");
+                } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                    System.out.println("ArrayIndexOutOfBoundsException occurred");
+                } else {
+                    System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+                }
+                String errorMessage = e.getMessage();
+                System.out.println("Error message: " + errorMessage);
+                e.printStackTrace();
             }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
         }
         return result;
     }
@@ -903,6 +948,40 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
         try {
             // Fetch branch data
             List<Branch> listData = loginImpls.getBranch(deptReq);
+            System.out.println("Number of rows returned: " + listData.size());
+            // Check if the list contains data
+            if (listData != null && !listData.isEmpty()) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setResData(listData);
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setResData(Collections.emptyList()); // Ensure empty list is returned
+            }
+
+            // Set the response message
+            result.setMessage(message);
+
+        } catch (NullPointerException e) {
+            log.error("NullPointerException occurred: {}", e.getMessage(), e);
+            handleError(result, Constant.codeError, "Null reference encountered during processing.");
+        } catch (IllegalArgumentException e) {
+            log.error("IllegalArgumentException occurred: {}", e.getMessage(), e);
+            handleError(result, Constant.codeError, "Invalid argument provided.");
+        } catch (Exception e) {
+            log.error("Unexpected error occurred: {}", e.getMessage(), e);
+            handleError(result, Constant.codeError, "An unexpected error occurred. Please contact support.");
+        }
+
+        return result;
+    }public BranchRes getBranchListAll( ) {
+        BranchRes result = new BranchRes();
+        Message message = new Message();
+
+        try {
+            // Fetch branch data
+            List<Branch> listData = loginImpls.getBranchAll();
             System.out.println("Number of rows returned: " + listData.size());
             // Check if the list contains data
             if (listData != null && !listData.isEmpty()) {

@@ -165,10 +165,17 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<!-- for centralized API action logging via @Aspect -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.24</version>
+			<!-- 1.18.24 breaks on JDK 21 (javac internals changed) -->
+			<version>1.18.36</version>
 			<scope>provided</scope>
 		</dependency>
         <dependency>

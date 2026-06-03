@@ -193,6 +193,14 @@ public class LoginController {
     return result;
     }
     @CrossOrigin(origins = "*")
+    @PostMapping("/log/doLogByUserRead")
+    public LoginRes doLogByUserRead(@RequestBody login_log loginReq){
+        log.info("====================================================>Login controller<=========================");
+    LoginRes result =new LoginRes();
+        result = loginService.doLog(loginReq);
+    return result;
+    }
+    @CrossOrigin(origins = "*")
     @PostMapping("/User/getShowUserInfo")
     public LoginRes getShowUserInfo(@RequestBody LoginReq loginReq){
         log.info("====================================================>getShowUserInfo controller<=========================");
@@ -252,6 +260,15 @@ public class LoginController {
         result = loginService.getSections(sectionReq);
         return result;
     }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Section/getSectionsData")
+    public SectionRes getSectionsData(@RequestBody SectionReq sectionReq){
+        log.info("====================================================>getSections controller<=========================");
+        SectionRes result =new SectionRes();
+        result = loginService.getSectionData(sectionReq);
+        return result;
+    }
     @CrossOrigin(origins = "*")
     @PostMapping("/Auth/Signup")
     public ReponeRes Signup(@RequestBody SignupReq signupReq) throws ParseException {
@@ -266,7 +283,10 @@ public class LoginController {
     public ReponeRes UpdatesSignUp(@RequestBody SignupReq signupReq) throws ParseException {
         log.info("====================================================>Signup controller<=========================");
         log.info("sig user:"+signupReq.getUserName());
+
         ReponeRes result =new ReponeRes();
+
+
         result = loginService.UpdatesSignUp(signupReq);
         return  result;
     }
@@ -353,6 +373,14 @@ public class LoginController {
         log.info("====================================================>getBranchList controller<=========================");
         BranchRes result = new BranchRes();
         result = loginService.getBranchList(branchReq);
+        return  result;
+    }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Branch/getBranchListAll")
+    public BranchRes getBranchListAll(){
+        log.info("====================================================>getBranchListAll controller<=========================");
+        BranchRes result = new BranchRes();
+        result = loginService.getBranchListAll();
         return  result;
     }
     @CrossOrigin(origins = "*")

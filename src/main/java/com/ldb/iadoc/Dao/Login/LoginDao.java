@@ -22,6 +22,7 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface LoginDao {
+    public int saveLoginLogbyType(List<Login> logReq);
     public List<login_log> dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq);
     public List<login_log> dologStatisticDetailsLogin(VWStatisticReq vwStatisticReq);
 

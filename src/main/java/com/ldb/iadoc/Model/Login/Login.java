@@ -36,4 +36,8 @@ public class Login {
     private String email;
     private String tel;
     private String idtype;
+
+    private String brCode;
+    private String brName;
+
 }

@@ -15,6 +15,8 @@ public class VWStatistic_login {
     String secCode;
     String secName;
     String amt;
+    String docNo;
+    String subName;
 
 
 

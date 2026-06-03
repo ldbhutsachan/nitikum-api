@@ -16,7 +16,6 @@ public class SignupReq {
     private String userName;
     private String gender;
     private String dob;
-    private String secCode;
     private String userType;
     private String userStatus;
     private String tel;
@@ -25,4 +24,7 @@ public class SignupReq {
     private String fullNameEn;
     private String fullNameLa;
     private String toKen;
+    private String brCode;
+    private String secCode;
+
 }

@@ -233,6 +233,18 @@ public class DocumentImpl implements DocumentDao {
         });
 
     }
+    //clear data
+    public int cleanData (){
+        String sql = "DELETE FROM DOC_SHARING\n" +
+                "WHERE DOC_NO IN (\n" +
+                "    SELECT DOC_NO\n" +
+                "    FROM (\n" +
+                "        SELECT DOC_NO, DOC_TYPE,\n" +
+                "               ROW_NUMBER() OVER (PARTITION BY DOC_TYPE ORDER BY DOC_NO DESC) AS rn\n" +
+                "        FROM DOC_SHARING ) t WHERE t.rn > 1)";
+        return IADOCJdbcTemplate.update(sql);
+    }
+
     //=======================update status to show document ============================================
     public int updateStatusShow (StatusShowReq statusShowReq){
         try {

@@ -165,6 +165,9 @@ public class DocumentService {
             System.out.println("Error message: " + errorMessage);
             e.printStackTrace();
         }
+        //let clear data same
+        documentImpl.cleanData();
+        //**haha hot fix
         return  result;
     }
     public ReponeRes updateDocumentStatusShow(StatusShowReq documentReq) throws ParseException {
