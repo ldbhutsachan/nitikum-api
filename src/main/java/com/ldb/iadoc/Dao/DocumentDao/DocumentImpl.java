@@ -178,11 +178,12 @@ public class DocumentImpl implements DocumentDao {
     @Override
     public int SaveDocument(DocumentReq documentReq,String keyDocNo) throws ParseException {
      log.info("show:"+documentReq.getDocDate());
-        SQL="insert into DOC_CREATE (STATUS_SHOW,SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE," +
+        SQL="insert into DOC_CREATE (type_doc,STATUS_SHOW,SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE," +
                 "RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID," +
                 "SHARING_TYPE,DETAILS,type,RELETED_NAME,DOC_KEY) " +
-                "values ('N',?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?,?)";
+                "values (?,'N',?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?,?)";
         return IADOCJdbcTemplate.update(SQL,new Object[]{
+               documentReq.getType(),//ຫົວຂໍ້ເອກະສານ
                documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
                 documentReq.getDocNo(), //ລະຫັດເອກະສານ
                 documentReq.getDocType(), //ປະເພດເອກະສານ
@@ -212,13 +213,14 @@ public class DocumentImpl implements DocumentDao {
         }
 
         // Construct SQL query with the optional con and con2 parts
-        String SQL = "UPDATE DOC_CREATE SET STATUS_SHOW=?, WHO_C_STATUS_SHOW=?, SUBJECTNAME=?, DOC_NO=?, DOC_TYPE=?, DOC_DATE=?, " +
+        String SQL = "UPDATE DOC_CREATE SET type_doc=?,STATUS_SHOW=?, WHO_C_STATUS_SHOW=?, SUBJECTNAME=?, DOC_NO=?, DOC_TYPE=?, DOC_DATE=?, " +
                 "RELATED=?, CREATED_DATE=sysdate, SHARING_TYPE=?, DETAILS=?, RELETED_NAME=? " + con + con2 + " WHERE id=?";
 
         log.info("show SQL: " + SQL);
 
         // Execute the update with parameters
         return IADOCJdbcTemplate.update(SQL, new Object[]{
+                documentReq.getType(),
                 documentReq.getSes_status(),      // Document status
                 documentReq.getW_status_show(),   // Document close status
                 documentReq.getSubjectName(),     // Document subject
@@ -395,6 +397,7 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("TYPE_DOC"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));
@@ -418,6 +421,7 @@ public class DocumentImpl implements DocumentDao {
                 tr.setSharingType(rs.getString("SHARING_TYPE"));
                 tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
                 tr.setDocDate(rs.getString("DOC_DATE"));
+                tr.setSes_status(rs.getString("SES_STATUS"));
 
                 tr.setDocKey(rs.getString("DOC_KEY"));
                 return tr;
@@ -534,11 +538,13 @@ public class DocumentImpl implements DocumentDao {
     @Override
     public List<DocumentAudit> getWaitListCheckByUser(DocumentReq documentReq) {
         SQL="select * from V_WAIT_DOCUMENT_LAW where type='1'  order by ID desc";
+        log.info("Executing SQL: {}", SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
                // tr.setRelated_No(rs.getString("SECTION_CODE"));
+                tr.setTypeDoc(rs.getString("type_doc"));
                 tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
@@ -653,6 +659,7 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("SES_STATUS2"));
                 tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
@@ -771,6 +778,7 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("SES_STATUS2"));
                 tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setAmt(rs.getLong("amt"));
                 tr.setConnects(rs.getString("connects"));
@@ -805,14 +813,29 @@ public class DocumentImpl implements DocumentDao {
         });
     }
     public List<DocumentAudit> getShareDocumentReportByText(GroupHeaderReq documentReq) {
-            SQL="select * from V_DOCUMENT_FOR_ADMIN  where DOC_NO like '%"+documentReq.getTextSearch()+"%' \n" +
+        StringBuilder sb = new StringBuilder();
+        String sqlCon = "";
+
+        String sqlOrder = "\n order by DOC_DATE desc";
+        if(!documentReq.getTextSearch().equals("")){
+            sqlCon="\n AND  DOC_NO like '%"+documentReq.getTextSearch()+"%' \n" +
                     "or SUBJECTNAME like '%"+documentReq.getTextSearch()+"%'  \n" +
                     "or DOC_DESC_LAO like '%"+documentReq.getTextSearch()+"%'  ";
-            log.info("SQL 01:"+SQL);
-        return IADOCJdbcTemplate.query(SQL, new RowMapper<DocumentAudit>() {
+        }
+        else {
+            sqlCon = "";
+        }
+        sb.append("select * from V_DOCUMENT_FOR_ADMIN where 1=1");
+        sb.append(sqlCon);
+
+        sb.append(sqlOrder);
+        String sql = sb.toString();
+
+        return IADOCJdbcTemplate.query(sql, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("SES_STATUS2"));
                 tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
@@ -928,6 +951,7 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("SES_STATUS2"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));
@@ -982,6 +1006,7 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("SES_STATUS2"));
                 tr.setRelated_Name(rs.getString("RELETED_NAME"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
@@ -1054,6 +1079,7 @@ public class DocumentImpl implements DocumentDao {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {
                 DocumentAudit tr = new DocumentAudit();
+                tr.setTypeDoc(rs.getString("SES_STATUS2"));
                 tr.setConnects(rs.getString("connects"));
                 tr.setTaiMard(rs.getString("taimard"));
                 tr.setYearIn(rs.getString("years"));

@@ -47,5 +47,6 @@ public class DocumentReq {
     private String startDate;
     private String endDate;
     private String docConnect;
+    private String type;
 
 }

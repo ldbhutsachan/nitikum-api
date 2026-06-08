@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DocumentAudit {
+    private String typeDoc;
     private String typeStatus;
     private String connectKanang;
     private String connectKanangAll;

@@ -489,6 +489,7 @@ public class DocumentService {
             for (DocumentAudit rspList : listData) {
                 if(rspList.getRelated_Name().equals(reNo)) {
                     DocumentAudit rsShow = new DocumentAudit();
+                    rsShow.setTypeDoc(rspList.getTypeDoc());
                     rsShow.setRelated_Name(rspList.getRelated_Name());
                     rsShow.setConnects(rspList.getConnects());
                     rsShow.setTaiMard(rspList.getTaiMard());
@@ -650,6 +651,7 @@ public class DocumentService {
             for (DocumentAudit rspList : listData) {
                 if(rspList.getRelated_Name().equals(reNo)) {
                     DocumentAudit rsShow = new DocumentAudit();
+                    rsShow.setTypeDoc(rspList.getTypeDoc());
                     rsShow.setRelated_Name(rspList.getRelated_Name());
                     rsShow.setConnects(rspList.getConnects());
                     rsShow.setTaiMard(rspList.getTaiMard());

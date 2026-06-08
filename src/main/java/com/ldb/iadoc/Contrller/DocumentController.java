@@ -224,6 +224,7 @@ public class DocumentController {
                     @RequestParam("details") String details,
                     @RequestParam("related_No") String related_No,///------------------------ພາກສ່ວນຮັບຜິດຊອບ
                     @RequestParam("related_Name") String related_Name,
+                    @RequestParam("type") String type,
                     @RequestParam(value = "old_image1", required = false) String  old_image1,
                     @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
@@ -259,6 +260,7 @@ public class DocumentController {
             data.setMarkerId(markerId);
             data.setSharingType(sharingType);
             data.setDetails(details);
+            data.setType(type);
 
             List<String> fileNamesEn = new ArrayList<>();
             List<String> fileNamesLa = new ArrayList<>();
@@ -392,6 +394,7 @@ public class DocumentController {
             @RequestParam("docType") String docType,
             @RequestParam("related") String related,
             @RequestParam("markerId") String markerId,
+            @RequestParam("type") String type,
             @RequestParam("sharingType") String sharingType,
             @RequestParam("details") String details,
             @RequestParam("related_Name") String related_Name,
@@ -445,6 +448,7 @@ public class DocumentController {
             data.setSes_status(ses_status);
             data.setW_status_show(w_status_show);
             data.setId(id);
+            data.setType(type);
             String fileNameEn = "";
             String fileNameLa = "";
             List<String> fileNamesEn = new ArrayList<>();
