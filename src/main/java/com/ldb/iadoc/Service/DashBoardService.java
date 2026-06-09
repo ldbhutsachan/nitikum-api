@@ -25,11 +25,13 @@ public class DashBoardService {
             dashboardResp.caltotal caltotal = dashBoardDao.dashboard(dashboardReq);
             List<dashboardResp.transaction> transactions = dashBoardDao.transaction(dashboardReq);
             List<dashboardResp.section> sections = dashBoardDao.section(dashboardReq);
+            List<dashboardResp.daily> daily = dashBoardDao.daily(dashboardReq);
 
             // ຕັ້ງຄ່າໃສ່ response
             resp.setCaltotalGroup(caltotal);
             resp.setTransactionsGroup(transactions);
             resp.setSectionGroup(sections);
+            resp.setDailyGroup(daily);
 
             message.setResCode("00");
             message.setResMgs("success");

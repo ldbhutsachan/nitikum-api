@@ -13,6 +13,7 @@ public class dashboardResp {
     private caltotal caltotalGroup;
     private List<transaction> transactionsGroup;
     private List<section> sectionGroup;
+    private List<daily> dailyGroup;
 
     @Data
     public class caltotal{
@@ -32,6 +33,13 @@ public class dashboardResp {
     @Data
     public class section{
         private String secName;
+        private String totalAmt;
+    }
+
+    @Data
+    public class daily{
+        private String name;
+        private String txnDate;
         private String totalAmt;
     }
 }
