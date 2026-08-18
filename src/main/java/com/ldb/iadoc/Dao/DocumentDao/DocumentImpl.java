@@ -691,6 +691,108 @@ public class DocumentImpl implements DocumentDao {
             }
         });
     }
+    @Override
+    public List<DocumentAudit> getDocumentPopUp(DocumentReq documentReq) {
+        String docType = documentReq.getDocType();
+        String secCode = documentReq.getSecCode();
+        String startDate = documentReq.getStartDate();
+        String endDate = documentReq.getEndDate();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT * FROM V_DOCUMENT_FOR_ADMIN WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        // filter by SES_STATUS
+        String sesStatus = documentReq.getSes_status();
+        if ("ALL".equalsIgnoreCase(sesStatus)) {
+            sb.append(" AND SES_STATUS IS NOT NULL ");
+        } else if ("N".equalsIgnoreCase(sesStatus)) {
+            sb.append(" AND SES_STATUS = ? ");
+            params.add("N");
+        } else if ("O".equalsIgnoreCase(sesStatus)) {
+            sb.append(" AND SES_STATUS = ? ");
+            params.add("O");
+        } else if ("NN".equalsIgnoreCase(sesStatus)) {
+            sb.append(" AND SES_STATUS2 = ? ");
+            params.add("ຮ່າງໃໝ່");
+        } else if ("OO".equalsIgnoreCase(sesStatus)) {
+            sb.append(" AND SES_STATUS2 = ? ");
+            params.add("ປັບປຸງ");
+        }
+
+        // optional filters
+        if (docType != null && !docType.isEmpty()) {
+            // ກວດສອບວ່າ docType ເປັນຕົວເລກຫຼືບໍ່
+            if (docType.matches("\\d+")) {
+                // ຖ້າເປັນຕົວເລກ → filter ຕາມ DOC_TYPE
+                sb.append(" AND DOC_TYPE = ? ");
+                params.add(docType);
+            } else {
+                // ຖ້າເປັນຊື່ → filter ຕາມ DOC_DESC_LAO
+                sb.append(" AND DOC_DESC_LAO = ? ");
+                params.add(docType);
+            }
+        }
+
+        // optional filters
+        if (secCode != null && !secCode.isEmpty()) {
+            // ກວດສອບວ່າ docType ເປັນຕົວເລກຫຼືບໍ່
+            if (secCode.matches("\\d+")) {
+                // ຖ້າເປັນຕົວເລກ → filter ຕາມ SEC_CODE
+                sb.append(" AND SEC_CODE = ? ");
+                params.add(secCode);
+            } else {
+                // ຖ້າເປັນຊື່ → filter ຕາມ DOC_DESC_LAO
+                sb.append(" AND BRANCH_NAME_LAO = ? ");
+                params.add(secCode);
+            }
+        }
+
+        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+            sb.append(" AND DOC_DATE BETWEEN ? AND ? ");
+            params.add(startDate);
+            params.add(endDate);
+        }
+
+        sb.append(" ORDER BY ID DESC");
+
+        String sql = sb.toString();
+        log.info("Executing SQL query: {} with params {}", sql, params);
+
+        return IADOCJdbcTemplate.query(sql, params.toArray(), (rs, rowNum) -> {
+            DocumentAudit tr = new DocumentAudit();
+            tr.setTypeDoc(rs.getString("SES_STATUS2"));
+            tr.setRelated_Name(rs.getString("RELETED_NAME"));
+            tr.setConnects(rs.getString("connects"));
+            tr.setTaiMard(rs.getString("taimard"));
+            tr.setYearIn(rs.getString("years"));
+            tr.setTaiMardDes(rs.getString("taimard"));
+            tr.setYearInDes(rs.getString("years"));
+            tr.setId(rs.getString("ID"));
+            tr.setSubjectName(rs.getString("SubjectName"));
+            tr.setApproveDate(rs.getString("APPROVE_DATE"));
+            tr.setDocNo(rs.getString("DOC_NO"));
+            tr.setRelated(rs.getString("RELATED"));
+            tr.setDepDescEN(rs.getString("DEPT_DESC_EN"));
+            tr.setDepDescLAO(rs.getString("DEPT_DESC_LAO"));
+            tr.setDocPath(rs.getString("DOC_PATH"));
+            tr.setCreateDate(rs.getString("CREATED_DATE"));
+            tr.setMarkerId(rs.getString("MAKER_ID"));
+            tr.setUserName(rs.getString("USER_NAME"));
+            tr.setDocType(rs.getString("DOC_TYPE"));
+            tr.setDocDescEn(rs.getString("DOC_DESC"));
+            tr.setDocDescLao(rs.getString("DOC_DESC_LAO"));
+            tr.setDocStatus(rs.getString("SES_STATUS"));
+            tr.setSharingType(rs.getString("SHARING_TYPE"));
+            tr.setDocPathLa(rs.getString("DOC_PATH_LA"));
+            tr.setDocDate(rs.getString("DOC_DATE"));
+            tr.setCreateBy(rs.getString("createBy"));
+            tr.setDocKey(rs.getString("DOC_KEY"));
+            tr.setAmt(rs.getLong("amt"));
+            return tr;
+        });
+    }
 
 
     public List<DocumentAudit> getShareDocumentGEN(DocumentReq documentReq) {

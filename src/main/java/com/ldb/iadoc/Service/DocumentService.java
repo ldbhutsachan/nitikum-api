@@ -4,8 +4,6 @@ import com.ldb.iadoc.Dao.DocumentDao.DocumentImpl;
 import com.ldb.iadoc.Dao.Login.LoginImpl;
 import com.ldb.iadoc.Mesage.Constant;
 import com.ldb.iadoc.Mesage.Message;
-import com.ldb.iadoc.Model.Branch.Branch;
-import com.ldb.iadoc.Model.Branch.BranchReq;
 import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
 import com.ldb.iadoc.Model.GroupHeaderReq;
@@ -22,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -113,17 +113,22 @@ public class DocumentService {
         Message message = new Message();
         int check = 0;
         int checkSharing = 0;
-        if(documentReq.getDocDate().equals("")){
-            documentReq.setDocDate(documentReq.getDocDate());
-        }else {
-            SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH); // Updated input format
-            Date inputDate = inputDateFormat.parse(documentReq.getDocDate()); // Parse the input date
 
-            SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH); // Desired output format
-            String outputDateStr = outputDateFormat.format(inputDate); // Format the parsed date
-            documentReq.setDocDate(outputDateStr); // Update the documentReq object
+        DateTimeFormatter inputFmt1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter inputFmt2 = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter outputFmt = DateTimeFormatter.ofPattern("dd-MMM-yy", Locale.ENGLISH);
 
+        String input = documentReq.getDocDate();
+        LocalDate date;
+
+        if (input.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            date = LocalDate.parse(input, inputFmt1);
+        } else {
+            date = LocalDate.parse(input, inputFmt2);
         }
+
+        documentReq.setDocDate(date.format(outputFmt));
+
         if(documentReq.getSharingType().equals("V")){
             //************clear share data frist ********************************delete DOC_SHARING from where DOC_TYPE=?
             documentImpl.clearSharingDataFrist(documentReq);
@@ -736,6 +741,57 @@ public class DocumentService {
                 documentReq.setUserType(getCheckUserList.get(0).getUserStatus());
             }
             listData = documentImpl.getShareDocument(documentReq);
+            List<Related> relatedList = documentImpl.getRsplistRelated();
+            List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
+            // Map related items to each audit
+            for (DocumentAudit audit : listData) {
+                List<Related> matchingRelatedItems = relatedList.stream()
+                        .filter(r -> r.getDocNo().equals(audit.getDocNo()))
+                        .collect(Collectors.toList());
+                audit.setRelatedList(matchingRelatedItems);
+
+                // Check if relatedShowList is empty or null
+                List<RelatedShow> relatedShows = relatedShowList.stream()
+                        .filter(r -> r.getDocKey().equals(audit.getDocKey()))
+                        .collect(Collectors.toList());
+                audit.setRelatedShowList02(relatedShows);
+            }
+            if (listData.size() > 0) {
+                message.setResCode(Constant.codeDone);
+                message.setResMgs(Constant.msgDone);
+                result.setMessage(message);
+                result.setResData(listData);
+                return result;
+            } else {
+                message.setResCode(Constant.codeDataNotFound);
+                message.setResMgs(Constant.msgDataNotFound);
+                result.setMessage(message);
+                result.setResData(null);
+                return result;
+            }
+        }catch (Exception e){
+            if (e instanceof NullPointerException) {
+                System.out.println("NullPointerException occurred");
+            } else if (e instanceof IllegalArgumentException) {
+                System.out.println("IllegalArgumentException occurred");
+            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+                // Handle ArrayIndexOutOfBoundsException
+                System.out.println("ArrayIndexOutOfBoundsException occurred");
+            } else {
+                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            }
+            String errorMessage = e.getMessage();
+            System.out.println("Error message: " + errorMessage);
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public DocumentAuditRes getDocumentPopUp(DocumentReq documentReq){
+        Message message = new Message();
+        DocumentAuditRes result = new DocumentAuditRes();
+        try {
+            List<DocumentAudit> listData = documentImpl.getDocumentPopUp(documentReq);
             List<Related> relatedList = documentImpl.getRsplistRelated();
             List<RelatedShow> relatedShowList = documentImpl.getRsplistRelatedShow();
             // Map related items to each audit

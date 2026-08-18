@@ -36,7 +36,7 @@ public class DashBoardImpl implements DashBoardDao {
                 .append("    COUNT(CASE WHEN TYPE_DOC = 'ປັບປຸງ' THEN 1 END) AS total_amt_doc_old ")
                 .append("FROM doc_create a ")
                 .append("INNER JOIN doc_type b ON b.DOC_TYPE = a.DOC_TYPE ")
-                .append("WHERE 1=1 ");
+                .append("WHERE a.TYPE='1' and 1=1 ");
 
         // Dynamic conditions
         if (conStartDate != null && conEndDate != null) {
@@ -88,7 +88,7 @@ public class DashBoardImpl implements DashBoardDao {
         sb.append("SELECT DOC_DESC_LAO AS type_document_name, COUNT(*) AS total_amt ")
                 .append("FROM doc_create a ")
                 .append("INNER JOIN doc_type b ON b.DOC_TYPE = a.DOC_TYPE ")
-                .append("WHERE 1=1 ");
+                .append("WHERE a.TYPE='1' and 1=1 ");
 
         Object[] params;
         if (conStartDate != null && conEndDate != null) {
@@ -129,7 +129,7 @@ public class DashBoardImpl implements DashBoardDao {
         sb.append("SELECT BRANCH_NAME_LAO AS sec_name, COUNT(*) AS total_amt ")
                 .append("FROM doc_create a ")
                 .append("INNER JOIN branch d ON ',' || a.RELETED_NAME || ',' LIKE '%,' || d.BRANCH_CODE || ',%' ")
-                .append("WHERE 1=1 ");
+                .append("WHERE  a.TYPE='1' and  1=1 ");
 
         Object[] params;
         if (conStartDate != null && conEndDate != null) {
@@ -161,40 +161,45 @@ public class DashBoardImpl implements DashBoardDao {
         String startDate = dashboardReq.getStartDate();
         String endDate = dashboardReq.getEndDate();
 
+        // Convert yyyy-MM-dd → yyyyMMdd
         String conStartDate = (startDate != null && !startDate.isEmpty())
                 ? startDate.replace("-", "") : null;
         String conEndDate = (endDate != null && !endDate.isEmpty())
                 ? endDate.replace("-", "") : null;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT DOC_DESC_LAO name,TO_CHAR(DOC_DATE, 'YYYY-MM-DD') AS txn_date, COUNT(*) AS total_amt ")
-                .append("FROM doc_create a INNER JOIN doc_type b ON b.DOC_TYPE = a.DOC_TYPE WHERE 1=1 ");
+        sb.append("SELECT  ")
+                .append("TO_CHAR(CREATED_DATE, 'MM') AS txn_date, ")
+                .append("COUNT(*) AS total_amt ")
+                .append("FROM doc_create a ")
+                .append("INNER JOIN doc_type b ON b.DOC_TYPE = a.DOC_TYPE ")
+                .append("WHERE  a.TYPE='1' and  1=1 ");
 
         Object[] params;
         if (conStartDate != null && conEndDate != null) {
-            sb.append(" AND TO_CHAR(DOC_DATE, 'YYYYMMDD') BETWEEN ? AND ? ");
+            sb.append(" AND TO_CHAR(CREATED_DATE, 'YYYYMMDD') BETWEEN ? AND ? ");
             params = new Object[]{conStartDate, conEndDate};
         } else if (conStartDate != null) {
-            sb.append(" AND TO_CHAR(DOC_DATE, 'YYYYMMDD') = ? ");
+            sb.append(" AND TO_CHAR(CREATED_DATE, 'YYYYMMDD') = ? ");
             params = new Object[]{conStartDate};
         } else if (conEndDate != null) {
-            sb.append(" AND TO_CHAR(DOC_DATE, 'YYYYMMDD') = ? ");
+            sb.append(" AND TO_CHAR(CREATED_DATE, 'YYYYMMDD') = ? ");
             params = new Object[]{conEndDate};
         } else {
             params = new Object[]{};
         }
 
-        sb.append(" GROUP BY DOC_DESC_LAO,DOC_DATE ORDER BY DOC_DATE");
+        sb.append(" GROUP BY  TO_CHAR(CREATED_DATE, 'MM') ")
+                .append("ORDER BY TO_CHAR(CREATED_DATE, 'MM') ASC");
 
         return IADOCJdbcTemplate.query(sb.toString(), params, (rs, rowNum) -> {
             dashboardResp resp = new dashboardResp();
             dashboardResp.daily dl = resp.new daily();
             dl.setTxnDate(rs.getString("txn_date"));
             dl.setTotalAmt(rs.getString("total_amt"));
-            dl.setName(rs.getString("name"));
+            dl.setName("-");
             return dl;
         });
     }
-
 
 }

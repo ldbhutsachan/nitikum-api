@@ -23,6 +23,7 @@ public interface DocumentDao {
     List<DocumentAudit> getAuditDocument(DocumentReq documentReq);
     public List<DocumentAudit> getWaitListCheckByUser(DocumentReq documentReq);
     public List<DocumentAudit> getShareDocument(DocumentReq documentReq);
+    public List<DocumentAudit> getDocumentPopUp(DocumentReq documentReq);
     public List<DocumentAudit> getReportDocument(DocumentReq documentReq) throws ParseException;
     public List<DocumentAudit> getShareDocumentByCondition(docSerachReq docSerachReq);
 }

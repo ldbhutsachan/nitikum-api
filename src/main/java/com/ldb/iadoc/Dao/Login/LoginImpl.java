@@ -26,10 +26,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
+
 @Slf4j
 @Service
 public class LoginImpl implements LoginDao {
@@ -414,11 +413,19 @@ public class LoginImpl implements LoginDao {
 
     }
 
+    public static String randomKey() {
+        LocalDate sysdate = LocalDate.now();
+
+        Random random = new Random(sysdate.toEpochDay());
+
+        return String.valueOf(random.nextInt(1_000_000));
+    }
+
     @Override
     public int saveBranch(BranchReq branchReq) {
         SQL = "insert into BRANCH (BRANCH_CODE,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type,status) values  (?,?,?,?,'1',?)";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
-                branchReq.getBranchCode(),
+                randomKey(),
                 // branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
@@ -780,7 +787,7 @@ public class LoginImpl implements LoginDao {
         sb.append("\n where  a.USER_ID='" + vwStatisticReq.getUserName() + "' and 1=1 ");
 
         sb.append(userTypConSql);
-        sb.append("\n  and SUBJECT_NAME is not null ");
+        //sb.append("\n  and SUBJECT_NAME is not null ");
         sb.append(orderBy);
         String sql = sb.toString();
         log.info("sql:"+sql);

@@ -4,6 +4,8 @@ import com.ldb.iadoc.Model.DocType.DocTypeReq;
 import com.ldb.iadoc.Model.DocType.DocTypeRes;
 import com.ldb.iadoc.Model.Document.*;
 import com.ldb.iadoc.Model.Document.Report.DocumentReportRes;
+import com.ldb.iadoc.Mesage.Constant;
+import com.ldb.iadoc.Mesage.Message;
 import com.ldb.iadoc.Model.GroupHeaderReq;
 import com.ldb.iadoc.Model.GroupHeaderRes;
 import com.ldb.iadoc.Model.ReponeRes;
@@ -66,6 +68,27 @@ public class DocumentController {
             ext = ext.substring(0, 10);
         }
         return ext;
+    }
+
+    /**
+     * Raised when a file can't be saved locally, watermarked, or pushed to the
+     * upload server. Carries a user-facing (Lao) message so SaveDoc can report
+     * a proper status/message instead of silently swallowing the failure.
+     */
+    private static class DocumentFileUploadException extends RuntimeException {
+        DocumentFileUploadException(String message) {
+            super(message);
+        }
+        DocumentFileUploadException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+    private static ReponeRes buildResult(String resCode, String resMgs) {
+        Message message = new Message();
+        message.setResCode(resCode);
+        message.setResMgs(resMgs);
+        return new ReponeRes(message);
     }
 
     private static boolean isPdfFile(File file) {
@@ -207,6 +230,60 @@ public class DocumentController {
         result = documentService.rejectDocument(documentReq);
         return  result;
     }
+    /**
+     * Saves one language's files (local save -> optional watermark -> upload) and
+     * returns the uploaded paths. Throws DocumentFileUploadException the moment any
+     * step fails, so SaveDoc can stop and report a real status/message instead of
+     * silently continuing with a partially-saved document.
+     */
+    private List<String> processFilesOrThrow(MultipartFile[] files, String label) {
+        List<String> fileNames = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String originalFilename = file.getOriginalFilename();
+            try {
+                // Step 1: Save original file temporarily
+                UUID uuid = UUID.randomUUID();
+                String safeFileName = buildTempFileName(uuid, originalFilename);
+                File targetFile = new File(uploadDir, safeFileName);
+                targetFile.getParentFile().mkdirs(); // ensure directory exists
+                file.transferTo(targetFile);
+
+                File fileToUpload = targetFile;
+                String ext = extractExtension(originalFilename);
+                if ("pdf".equals(ext) && isPdfFile(targetFile)) {
+                    try {
+                        // Step 2: Generate watermarked PDF
+                        String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
+                        fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
+                    } catch (Exception watermarkEx) {
+                        // If the file isn't a valid PDF or iText fails, still upload original.
+                        log.warn("Watermark failed for {} file {}, uploading original instead", label, originalFilename, watermarkEx);
+                        fileToUpload = targetFile;
+                    }
+                } else if ("pdf".equals(ext)) {
+                    log.warn("{} file has .pdf extension but is not a valid PDF header: {}", label, originalFilename);
+                }
+
+                // Step 3: Upload (generated PDF if watermark succeeded, otherwise original)
+                String uploadedPath = mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid);
+                if (uploadedPath == null || uploadedPath.isBlank()) {
+                    // uploadDirectoryDocLaGen swallows its own exceptions and returns "" on failure.
+                    throw new DocumentFileUploadException(
+                            "ອັບໂຫລດໄຟລ໌ບໍ່ສໍາເລັດ (" + label + "): " + originalFilename);
+                }
+                fileNames.add(uploadedPath);
+
+            } catch (DocumentFileUploadException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("Error processing {} file {}", label, originalFilename, e);
+                throw new DocumentFileUploadException(
+                        "ອັບໂຫລດໄຟລ໌ບໍ່ສໍາເລັດ (" + label + "): " + originalFilename, e);
+            }
+        }
+        return fileNames;
+    }
+
     @CrossOrigin(origins = "*")
     @PostMapping(value = "/Document/SaveDoc" , consumes = {"multipart/form-data"})
     public ReponeRes SaveDoc(
@@ -229,25 +306,8 @@ public class DocumentController {
                     @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
         log.info("====================================================>SaveDoc controller<=========================");
-        ReponeRes result = new ReponeRes();
-        try{
+        try {
             DocumentReq data = new DocumentReq();
-            String a1 = "0";
-            if (docNo =="" || docNo.equals("")){
-                data.setDocNo(a1);
-            }
-            else if (subjectName == "" || subjectName.equals("")){
-                data.setSubjectName(a1);
-            }
-            else if (docDate == "" || docDate.equals("")){
-                data.setDocNo(a1);
-            }
-            else if (docDate == "" || docDate.equals("")){
-                data.setDocDate("");
-            }
-            else if (details == "" || details.equals("")){
-                data.setDetails(a1);
-            }
             data.setRelated_No(related_No);
             data.setRelated_Name(related_Name);
             data.setDocNo(docNo);
@@ -262,125 +322,39 @@ public class DocumentController {
             data.setDetails(details);
             data.setType(type);
 
-            List<String> fileNamesEn = new ArrayList<>();
-            List<String> fileNamesLa = new ArrayList<>();
             //==========================ກວດສອບ ໄຟທີ 1==================================
-            if (filesEn == null) {
+            if (filesEn == null || filesEn.length == 0) {
                 log.warn("************* file EN is null ****************");
                 data.setDocPath(old_image1);
             } else {
                 log.info("************* processing EN files ****************");
-                for (MultipartFile file : filesEn) {
-                    try {
-                        // Step 1: Save original file temporarily
-                        UUID uuid = UUID.randomUUID();
-                        String safeFileName = buildTempFileName(uuid, file.getOriginalFilename());
-                        // Step 1: Save original file temporarily
-
-                        File targetFile = new File(uploadDir, safeFileName);
-                        targetFile.getParentFile().mkdirs(); // ensure directory exists
-                        file.transferTo(targetFile);
-
-                        File fileToUpload = targetFile;
-                        String ext = extractExtension(file.getOriginalFilename());
-                        if ("pdf".equals(ext) && isPdfFile(targetFile)) {
-                            try {
-                                // Step 2: Generate watermarked PDF
-                                String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
-                                fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
-                            } catch (Exception watermarkEx) {
-                                // If the file isn't a valid PDF or iText fails, still upload original.
-                                log.warn("Watermark failed for EN file {}, uploading original instead", file.getOriginalFilename(), watermarkEx);
-                                fileToUpload = targetFile;
-                            }
-                        } else if ("pdf".equals(ext)) {
-                            log.warn("EN file has .pdf extension but is not a valid PDF header: {}", file.getOriginalFilename());
-                        }
-
-                        // Step 3: Upload (generated PDF if watermark succeeded, otherwise original)
-                        fileNamesEn.add(mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid));
-
-                    } catch (Exception e) {
-                        log.error("Error processing EN file {}", file.getOriginalFilename(), e);
-                    }
-                }
-
-                if (fileNamesEn.isEmpty()) {
-                    data.setDocPath(null);
-                } else {
-                    data.setDocPath(String.join(",", fileNamesEn));
-                }
-
+                List<String> fileNamesEn = processFilesOrThrow(filesEn, "EN");
+                data.setDocPath(fileNamesEn.isEmpty() ? null : String.join(",", fileNamesEn));
             }
-         //   ==========================ກວດສອບ ໄຟທີ 2==================================
-            if (filesLao == null) {
+
+            //   ==========================ກວດສອບ ໄຟທີ 2==================================
+            if (filesLao == null || filesLao.length == 0) {
                 log.warn("************* file LAO is null ****************");
                 data.setDocPathLa(old_image2);
             } else {
                 log.info("************* processing Lao files ****************");
-                for (MultipartFile file : filesLao) {
-                    try {
-                        // Step 1: Save original file temporarily
-                        UUID uuid = UUID.randomUUID();
-                        String safeFileName = buildTempFileName(uuid, file.getOriginalFilename());
-                        // Step 1: Save original file temporarily
-
-                        File targetFile = new File(uploadDir, safeFileName);
-                        targetFile.getParentFile().mkdirs(); // ensure directory exists
-                        file.transferTo(targetFile);
-
-                        File fileToUpload = targetFile;
-                        String ext = extractExtension(file.getOriginalFilename());
-                        if ("pdf".equals(ext) && isPdfFile(targetFile)) {
-                            try {
-                                // Step 2: Generate watermarked PDF
-                                String outputPath = System.getProperty("java.io.tmpdir") + File.separator + uuid + "-gen.pdf";
-                                fileToUpload = mediaUploadService.genPDFS(targetFile.getAbsolutePath(), outputPath);
-                            } catch (Exception watermarkEx) {
-                                log.warn("Watermark failed for Lao file {}, uploading original instead", file.getOriginalFilename(), watermarkEx);
-                                fileToUpload = targetFile;
-                            }
-                        } else if ("pdf".equals(ext)) {
-                            log.warn("Lao file has .pdf extension but is not a valid PDF header: {}", file.getOriginalFilename());
-                        }
-
-                        // Step 3: Upload (generated PDF if watermark succeeded, otherwise original)
-                        fileNamesLa.add(mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid));
-
-
-                    } catch (Exception e) {
-                        log.error("Error processing Lao file {}", file.getOriginalFilename(), e);
-                    }
-                }
-
-                if (fileNamesLa.isEmpty()) {
-                    data.setDocPathLa(null);
-                } else {
-                    data.setDocPathLa(String.join(",", fileNamesLa));
-                }
-
+                List<String> fileNamesLa = processFilesOrThrow(filesLao, "LAO");
+                data.setDocPathLa(fileNamesLa.isEmpty() ? null : String.join(",", fileNamesLa));
             }
-
 
             List<KeyReq> rspListData = documentService.getMaxKey();
             String keyDocNo  = rspListData.get(0).getKeyDocNo();
-            result = documentService.SaveDocument(data,keyDocNo);
+            return documentService.SaveDocument(data, keyDocNo);
 
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+        } catch (DocumentFileUploadException e) {
+            // Couldn't save/upload one of the files to the file server: report it clearly
+            // instead of silently continuing or returning an empty response.
+            log.error("SaveDoc failed: {}", e.getMessage(), e);
+            return buildResult(Constant.codeError, e.getMessage());
+        } catch (Exception e) {
+            log.error("SaveDoc failed with an unexpected error", e);
+            return buildResult(Constant.codeError, Constant.msgFailSave);
         }
-        return  result;
     }
     //***************************************************update data for document *************************************
     @CrossOrigin(origins = "*")
@@ -609,6 +583,13 @@ public class DocumentController {
         System.out.println("getSecCode:"+documentReq.getSecCode());
         DocumentAuditRes result =new DocumentAuditRes();
         result = documentService.getShareDocumentKanang(documentReq);
+        return result;
+    }
+    @CrossOrigin(origins = "*")
+    @PostMapping("/Share/getDocumentPopUp")
+    public DocumentAuditRes getDocumentPopUp(@RequestBody DocumentReq documentReq){
+        DocumentAuditRes result =new DocumentAuditRes();
+        result = documentService.getDocumentPopUp(documentReq);
         return result;
     }
     @CrossOrigin(origins = "*")
