@@ -2,6 +2,7 @@ package com.ldb.iadoc.Dao.DashBoardDao;
 
 import com.ldb.iadoc.Model.dashboard.dashboardReq;
 import com.ldb.iadoc.Model.dashboard.dashboardResp;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class DashBoardImpl implements DashBoardDao {
 
@@ -60,6 +62,7 @@ public class DashBoardImpl implements DashBoardDao {
         } else {
             params = new Object[]{};
         }
+        log.info("sql dashboard:"+sql);
 
         return IADOCJdbcTemplate.queryForObject(sql, params, (rs, rowNum) -> {
             dashboardResp resp = new dashboardResp();
@@ -105,6 +108,8 @@ public class DashBoardImpl implements DashBoardDao {
         }
 
         sb.append(" GROUP BY DOC_DESC_LAO ORDER BY COUNT(*) DESC");
+
+       log.info("dashboard :"+sb.toString());
 
         return IADOCJdbcTemplate.query(sb.toString(), params, (rs, rowNum) -> {
             dashboardResp resp = new dashboardResp();

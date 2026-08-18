@@ -1,7 +1,6 @@
 package com.ldb.iadoc.Service;
 
 
-import com.ldb.iadoc.Contrller.LoginController;
 import com.ldb.iadoc.Dao.Login.LoginImpl;
 import com.ldb.iadoc.Mesage.Constant;
 import com.ldb.iadoc.Mesage.Message;
@@ -64,19 +63,10 @@ public class LoginService {
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -100,19 +90,10 @@ public class LoginService {
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -136,19 +117,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -171,19 +143,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -220,21 +183,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-
-
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
     return result;
     }
@@ -251,21 +203,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
 
         }catch (Exception e){
-
-
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
     return result;
     }
@@ -288,19 +229,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
     return result;
     }
@@ -323,19 +255,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
     return result;
     }
@@ -358,20 +281,11 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             return result;
         }
     }catch (Exception e){
-        if (e instanceof NullPointerException) {
-            System.out.println("NullPointerException occurred");
-        } else if (e instanceof IllegalArgumentException) {
-            System.out.println("IllegalArgumentException occurred");
-        } else if (e instanceof ArrayIndexOutOfBoundsException) {
-            // Handle ArrayIndexOutOfBoundsException
-            System.out.println("ArrayIndexOutOfBoundsException occurred");
-        } else {
-            System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
-        String errorMessage = e.getMessage();
-        System.out.println("Error message: " + errorMessage);
-        e.printStackTrace();
-    }
         return result;
     }
     public SectionRes getSections(SectionReq sectionReq){
@@ -393,19 +307,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -428,19 +333,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -464,19 +360,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -499,19 +386,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -534,28 +412,19 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
     public ReponeRes Signup(SignupReq signupReq) throws ParseException {
+        log.info("req:",signupReq.toString());
         Message message = new Message();
         ReponeRes  result =new ReponeRes();
         int check = 0;
         check= loginImpls.signup(signupReq);
-        System.out.println("check:"+check);
         try {
             if (check > 0) {
                 message.setResCode(Constant.codeDone);
@@ -568,18 +437,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -610,18 +471,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 result.setMessage(message);
                 return result;
             } catch (Exception e) {
-                if (e instanceof NullPointerException) {
-                    System.out.println("NullPointerException occurred");
-                } else if (e instanceof IllegalArgumentException) {
-                    System.out.println("IllegalArgumentException occurred");
-                } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                    System.out.println("ArrayIndexOutOfBoundsException occurred");
-                } else {
-                    System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-                }
-                String errorMessage = e.getMessage();
-                System.out.println("Error message: " + errorMessage);
-                e.printStackTrace();
+                log.error("Unexpected error: {}", e.getMessage(), e);
+                message.setResCode(Constant.codeError);
+                message.setResMgs(Constant.msgError);
+                result.setMessage(message);
             }
         }
         return result;
@@ -644,18 +497,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -670,7 +515,7 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 String oldPwdCheck= listData.get(0).getOldPassWord();
                 String oldUserId= loginReq.getOldUserId();
                 String oldPwd= loginReq.getOldPassword();
-                 if(oldUserIdCheck.equals(oldUserId) && oldPwdCheck.equals(oldPwdCheck)){
+                 if(oldUserIdCheck.equals(oldUserId) && oldPwdCheck.equals(oldPwd)){
                     loginImpls.chagePassword(loginReq);
                     message.setResCode(Constant.codeDone);
                     message.setResMgs(Constant.msgDoneChangePwd);
@@ -680,9 +525,13 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 else if(!oldUserIdCheck.equals(oldUserId)){
                     message.setResCode(Constant.codeErrorLogin);
                     message.setResMgs(Constant.msgUserIdFail);
+                    result.setMessage(message);
+                    return result;
                 }else if(!oldPwdCheck.equals(oldPwd)){
                     message.setResCode(Constant.codeErrorLogin);
                     message.setResMgs(Constant.msgPasswordFail);
+                    result.setMessage(message);
+                    return result;
                 }
                 else {
                     message.setResCode(Constant.codeError);
@@ -697,18 +546,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -730,18 +571,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -762,18 +595,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -794,18 +619,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -827,18 +644,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -859,18 +668,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -891,18 +692,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -925,19 +718,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -1075,19 +859,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }  public ComboBranchRes getComboxBranchStatus(){
@@ -1109,19 +884,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -1144,19 +910,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -1179,18 +936,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -1211,18 +960,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }
@@ -1243,18 +984,10 @@ public VWStatisticLogRes dologStatisticDetailsDoc(VWStatisticReq vwStatisticReq)
             result.setMessage(message);
             return result;
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("Unexpected error: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
         }
         return result;
     }

@@ -50,58 +50,56 @@ public class DocumentService {
         Message message = new Message();
         int check = 0;
         int checkSharing = 0;
-        if(documentReq.getDocDate().equals("")){
-            documentReq.setDocDate(documentReq.getDocDate());
-        }else {
-            SimpleDateFormat inputDateFormat = new SimpleDateFormat("yy-MM-dd", Locale.ENGLISH);
-            Date inputDate = inputDateFormat.parse(documentReq.getDocDate()); // Parse the input date
-
-            SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH);
-            String formattedDate = outputDateFormat.format(inputDate); // Ensure the date is formatted correctly
-            documentReq.setDocDate(formattedDate);
-        }
-         if(documentReq.getSharingType().equals("V")){
-             log.info("show log 01:");
-             check= documentImpl.SaveDocument(documentReq,keyDocNo);
-            checkSharing= documentImpl.saveSharingDoBranch(documentReq,keyDocNo);
-            //********************insert section for share by array data *******************
-            documentImpl.saveRedNo(documentReq);
-            documentImpl.DOC_CREATE_TEMP(documentReq);
-        }else {
-             log.info("show log 02:");
-             check= documentImpl.SaveDocument(documentReq,keyDocNo);
-             checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq,keyDocNo);
-             //********************insert section for share by array data *******************
-             documentImpl.saveRedNo(documentReq);
-             documentImpl.DOC_CREATE_TEMP(documentReq);
-             log.info("*********************** :no array: ************************");
-         }
         try {
+            if(documentReq.getDocDate().equals("")){
+                documentReq.setDocDate(documentReq.getDocDate());
+            }else {
+                SimpleDateFormat inputDateFormat = new SimpleDateFormat("yy-MM-dd", Locale.ENGLISH);
+                Date inputDate = inputDateFormat.parse(documentReq.getDocDate()); // Parse the input date
+
+                SimpleDateFormat outputDateFormat = new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH);
+                String formattedDate = outputDateFormat.format(inputDate); // Ensure the date is formatted correctly
+                documentReq.setDocDate(formattedDate);
+            }
+            if(documentReq.getSharingType().equals("V")){
+                log.info("show log 01:");
+                check= documentImpl.SaveDocument(documentReq,keyDocNo);
+                checkSharing= documentImpl.saveSharingDoBranch(documentReq,keyDocNo);
+                //********************insert section for share by array data *******************
+                documentImpl.saveRedNo(documentReq);
+                documentImpl.DOC_CREATE_TEMP(documentReq);
+            }else {
+                log.info("show log 02:");
+                check= documentImpl.SaveDocument(documentReq,keyDocNo);
+                checkSharing = documentImpl.saveSharingDoBranchNoarray(documentReq,keyDocNo);
+                //********************insert section for share by array data *******************
+                documentImpl.saveRedNo(documentReq);
+                documentImpl.DOC_CREATE_TEMP(documentReq);
+                log.info("*********************** :no array: ************************");
+            }
+
             if (check > 0 && checkSharing > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
                 result.setMessage(message);
                 return result;
             }else {
+                if (check <= 0) {
+                    log.warn("SaveDocument: main document insert failed for docNo={}", documentReq.getDocNo());
+                }
+                if (checkSharing <= 0) {
+                    log.warn("SaveDocument: sharing insert failed for docNo={}", documentReq.getDocNo());
+                }
                 message.setResCode(Constant.codeError);
-                message.setResMgs(Constant.msgFail);
+                message.setResMgs(Constant.msgFailSave);
                 result.setMessage(message);
                 return result;
             }
         }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            log.error("SaveDocument failed for docNo={}: {}", documentReq.getDocNo(), e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgFailSave);
+            result.setMessage(message);
         }
         return  result;
     }

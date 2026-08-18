@@ -35,11 +35,10 @@ public class LoginImpl implements LoginDao {
     @Autowired
     @Qualifier("IADOCJdbcTemplate")
     private JdbcTemplate IADOCJdbcTemplate;
-    String SQL = "";
 
     @Override
     public List<Login> login(LoginReq loginReq) {
-        SQL = "SELECT * FROM IADOC.V_LOGIN where USER_NAME='" + loginReq.getUserName() + "' and USER_PWD='" + loginReq.getPassWord() + "'";
+        String SQL = "SELECT * FROM IADOC.V_LOGIN where USER_NAME='" + loginReq.getUserName() + "' and USER_PWD='" + loginReq.getPassWord() + "'";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
             @Override
             public Login mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -67,10 +66,11 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<Login> getShowUserInfo(LoginReq loginReq) {
+        String SQL;
         if (loginReq.getUserType().equals("A")) {
-            SQL = "SELECT * FROM IADOC.V_LOGIN";
+            SQL = "SELECT * FROM V_LOGIN";
         } else {
-            SQL = "SELECT * FROM IADOC.V_LOGIN where USER_NAME='" + loginReq.getUserName() + "'";
+            SQL = "SELECT * FROM V_LOGIN where USER_NAME='" + loginReq.getUserName() + "'";
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
             @Override
@@ -108,6 +108,7 @@ public class LoginImpl implements LoginDao {
         String ListUser = Arrays.toString(sec).replace("[", "('").replace(",", "','").replace("]", "')");
         String checkType = ListUser.replace("('", "").replace("')", "");
 
+        String SQL;
         if (checkType.equals("A")) {
             SQL = "SELECT * FROM V_COMBOUSER";
         } else {
@@ -127,7 +128,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<UserType> getUserType() {
-        SQL = "select * from usertype order by ID asc";
+        String SQL = "select * from usertype order by ID desc";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<UserType>() {
             @Override
             public UserType mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -144,10 +145,12 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<Section> getSection(SectionReq sectionReq) {
+        String SQL;
+        log.info("getSection:"+sectionReq.getSecCode());
         if (sectionReq.getSecCode() == "" || sectionReq.getSecCode() == null) {
-            SQL = "select * from V_SECTIONINFO where type='1' order by SEC_CODE asc";
+            SQL = "select * from V_SECTIONINFO where type='1' order by id desc";
         } else {
-            SQL = "select * from V_SECTIONINFO where type='1' and DEPT_CODE = '" + sectionReq.getSecCode() + "' order by SEC_CODE asc";
+            SQL = "select * from V_SECTIONINFO where type='1' and DEPT_CODE = '" + sectionReq.getSecCode() + "' order by id desc";
 
         }
         log.info("sql:"+SQL);
@@ -169,7 +172,7 @@ public class LoginImpl implements LoginDao {
     }
     public List<Section> getSectionData(SectionReq sectionReq) {
 
-        SQL = "select * from V_SECTIONINFO where type='1' and DEPT_CODE = '" + sectionReq.getBrCode() + "' order by SEC_CODE asc";
+        String SQL = "select * from V_SECTIONINFO where type='1' and DEPT_CODE = '" + sectionReq.getBrCode() + "' order by id desc";
         log.info("sql:"+SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Section>() {
             @Override
@@ -188,10 +191,11 @@ public class LoginImpl implements LoginDao {
         // return null;
     }
     public List<Section> getSectionsExcutive(SectionReq sectionReq) {
+        String SQL;
         if (sectionReq.getSecCode() == "" || sectionReq.getSecCode() == null) {
-            SQL = "select * from V_SECTIONINFO where type='2' order by SEC_CODE asc";
+            SQL = "select * from V_SECTIONINFO where type='2' order by id desc";
         } else {
-            SQL = "select * from V_SECTIONINFO where type='2'  and SEC_CODE='" + sectionReq.getSecCode() + "' order by SEC_CODE asc";
+            SQL = "select * from V_SECTIONINFO where type='2'  and SEC_CODE='" + sectionReq.getSecCode() + "' order by id desc";
 
         }
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Section>() {
@@ -217,6 +221,7 @@ public class LoginImpl implements LoginDao {
         String ListUser = Arrays.toString(sec).replace("[", "('").replace(",", "','").replace("]", "')");
         String checkType = ListUser.replace("('", "").replace("')", "");
 
+        String SQL;
         if (checkType.equals("A")) {
             SQL = "select * from V_COMBOSECTION order by SEC_CODE asc";
         } else {
@@ -238,6 +243,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<ComboSection> getComboxSectionsExcutive(ComboSectionExReq sectionReq) {
+        String SQL;
         if (sectionReq.getBranchCode().equals("A")) {
             SQL = "select * from V_COMBOSECTION_EXCUTIVE order by SEC_CODE asc";
         } else {
@@ -257,7 +263,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<ComboSection> getComboxDeptExcutive(ComboSectionExReq sectionReq) {
-        SQL = "select * from V_COMBOSECTION_EXCUTIVE_TP_21 where SEC_CODE_IN ='" + sectionReq.getSecCode() + "' order by SEC_CODE asc";
+        String SQL = "select * from V_COMBOSECTION_EXCUTIVE_TP_21 where SEC_CODE_IN ='" + sectionReq.getSecCode() + "' order by SEC_CODE asc";
         System.out.println("SQL:" + SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboSection>() {
             @Override
@@ -273,7 +279,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<LoginChangPwd> checkOldPwd(LoginReq loginReq) {
-        SQL = "select USER_PWD,USER_ID from USERS where USER_PWD='" + loginReq.getOldPassword() + "' and  USER_ID='" + loginReq.getOldUserId() + "'";
+        String SQL = "select USER_PWD,USER_ID from USERS where USER_PWD='" + loginReq.getOldPassword() + "' and  USER_ID='" + loginReq.getOldUserId() + "'";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<LoginChangPwd>() {
             @Override
             public LoginChangPwd mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -288,7 +294,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int chagePassword(LoginReq signupReq) throws ParseException {
-        SQL = "update USERS set USER_PWD=? where USER_ID=?";
+        String SQL = "update USERS set USER_PWD=? where USER_ID=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 signupReq.getNewPwd(),
                 signupReq.getOldUserId()
@@ -301,7 +307,7 @@ public class LoginImpl implements LoginDao {
         Date dob = sdf.parse(signupReq.getDob());
         java.sql.Date DobStartDate = new java.sql.Date(dob.getTime());
         try {
-            SQL = "INSERT INTO USERS (USER_ID,USER_PWD,USER_NAME,GENDER,DOB,SEC_CODE,USER_TYPE,USER_STATUS," +
+            String SQL = "INSERT INTO USERS (USER_ID,USER_PWD,USER_NAME,GENDER,DOB,SEC_CODE,USER_TYPE,USER_STATUS," +
                     "TEL,EMAIL,LOGIN_STATUS,TOKEN,CREATED_DT,FULLNAME_EN,FULLNAME_LA) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,sysdate,?,?) ";
             List<Object> paraList = new ArrayList<Object>();
             paraList.add(signupReq.getUserId());
@@ -331,7 +337,7 @@ public class LoginImpl implements LoginDao {
         Date dob = sdf.parse(signupReq.getDob());
         java.sql.Date DobStartDate = new java.sql.Date(dob.getTime());
         try {
-            SQL = "UPDATE USERS SET USER_ID=?,USER_PWD=?,USER_NAME=?,GENDER=?,DOB=?,SEC_CODE=?,USER_TYPE=?,USER_STATUS=?," +
+            String SQL = "UPDATE USERS SET USER_ID=?,USER_PWD=?,USER_NAME=?,GENDER=?,DOB=?,SEC_CODE=?,USER_TYPE=?,USER_STATUS=?," +
                     "TEL=?,EMAIL=?,LOGIN_STATUS=?,FULLNAME_EN=?,FULLNAME_LA=? WHERE ID=?";
             List<Object> paraList = new ArrayList<Object>();
             paraList.add(signupReq.getUserId());
@@ -357,13 +363,13 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int DelSignUp(SignupReq signupReq) throws ParseException {
-        SQL = "delete from users where id='" + signupReq.getId() + "'";
+        String SQL = "delete from users where id='" + signupReq.getId() + "'";
         return IADOCJdbcTemplate.update(SQL);
     }
 
     @Override
     public int saveDept(DeptReq deptReq) {
-        SQL = "insert into DEPTS (DEPT_DESC,DEPT_DESC_LAO,BRANCHCODE) values (?,?,?)";
+        String SQL = "insert into DEPTS (DEPT_DESC,DEPT_DESC_LAO,BRANCHCODE) values (?,?,?)";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 deptReq.getDeptDesc(),
                 deptReq.getDeptLao(),
@@ -373,7 +379,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int updateDept(DeptReq deptReq) {
-        SQL = "update DEPTS set DEPT_DESC=?,DEPT_DESC_LAO=?,BRANCHCODE=? where DEPT_CODE=?";
+        String SQL = "update DEPTS set DEPT_DESC=?,DEPT_DESC_LAO=?,BRANCHCODE=? where DEPT_CODE=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 deptReq.getDeptDesc(),
                 deptReq.getDeptLao(),
@@ -384,7 +390,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int deleteDept(DeptReq deptReq) {
-        SQL = "delete from  DEPTS  where DEPT_CODE=?";
+        String SQL = "delete from  DEPTS  where DEPT_CODE=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 deptReq.getDeptId()
         });
@@ -392,6 +398,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<Dept> getDeptList(DeptReq deptReq) {
+        String SQL;
         if (deptReq.getDeptId() == null || deptReq.getDeptId() == "") {
             SQL = "select * from V_DEPTINFO order by DEPT_CODE asc";
         } else {
@@ -414,30 +421,29 @@ public class LoginImpl implements LoginDao {
     }
 
     public static String randomKey() {
-        LocalDate sysdate = LocalDate.now();
+        long timestamp = System.currentTimeMillis();
+        Random random = new Random(timestamp);
 
-        Random random = new Random(sysdate.toEpochDay());
-
-        return String.valueOf(random.nextInt(1_000_000));
+        return String.format("%06d", random.nextInt(1_000_000));
     }
 
     @Override
     public int saveBranch(BranchReq branchReq) {
-        SQL = "insert into BRANCH (BRANCH_CODE,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type,status) values  (?,?,?,?,'1',?)";
+
+        String SQL = "insert into BRANCH (BRANCH_CODE,BRANCH_NAME_LAO,LOCATION,BRANCH_TYPE,type,status) values  (?,?,?,?,'1','Active')";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 randomKey(),
                 // branchReq.getBrName(),
                 branchReq.getBrNameLa(),
                 branchReq.getLocation(),
-                branchReq.getBrType(),
-                branchReq.getStatus()
+                branchReq.getBrType()
 
         });
     }
 
     @Override
     public int saveBranchExcutive(BranchReq branchReq) {
-        SQL = "insert into BRANCH (BRANCH_CODE,LOCATION,BRANCH_TYPE,type) values  (?,?,?,'2')";
+        String SQL = "insert into BRANCH (BRANCH_CODE,LOCATION,BRANCH_TYPE,type) values  (?,?,?,'2')";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 branchReq.getBranchCode(),
                 // branchReq.getBrName(),
@@ -449,7 +455,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int updateBranch(BranchReq branchReq) {
-        SQL = "update BRANCH set BRANCH_CODE=?,BRANCH_NAME_LAO=?,LOCATION=?,BRANCH_TYPE=?,status=? where ID=?";
+        String SQL = "update BRANCH set BRANCH_CODE=?,BRANCH_NAME_LAO=?,LOCATION=?,BRANCH_TYPE=?,status=? where ID=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 branchReq.getBranchCode(),
                 // branchReq.getBrName(),
@@ -463,7 +469,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int delBranch(BranchReq branchReq) {
-        SQL = "delete from BRANCH where ID=?";
+        String SQL = "delete from BRANCH where ID=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 branchReq.getID()
         });
@@ -471,11 +477,12 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<Branch> getBranch(BranchReq branchReq) {
+        String SQL;
         if (branchReq.getBranchCode() == null || branchReq.getBranchCode() == "") {
-            SQL = "select * from BRANCH where  type='1'  order by TYPE_ORDER asc";
+            SQL = "select * from BRANCH where  type='1'  order by id desc";
             System.out.println("SQL:" + SQL);
         } else {
-            SQL = "select * from BRANCH where BRANCH_CODE='" + branchReq.getBranchCode() + "' and  type='1' order by TYPE_ORDER asc";
+            SQL = "select * from BRANCH where BRANCH_CODE='" + branchReq.getBranchCode() + "' and  type='1' order by id desc";
             System.out.println("SQL:" + SQL);
         }
         return IADOCJdbcTemplate.query(SQL, (rs, rowNum) -> {
@@ -491,12 +498,12 @@ public class LoginImpl implements LoginDao {
         });
     }
     public List<Branch> getBranchAll( ) {
-            SQL = "select * from BRANCH where  type='1'  order by TYPE_ORDER asc";
+            String SQL = "select * from BRANCH where  type='1'  order by id desc";
             System.out.println("SQL:" + SQL);
         return IADOCJdbcTemplate.query(SQL, (rs, rowNum) -> {
             Branch tr = new Branch();
             tr.setID(rs.getString("ID")); // Replace with rs.getString if ID is VARCHAR
-            tr.setBranchCode(rs.getString("BRANCH_CODE"));
+          //  tr.setBranchCode(rs.getString("BRANCH_CODE"));
             tr.setBrName("-");
             tr.setBrNameLa(rs.getString("BRANCH_NAME_LAO"));
             tr.setLocation(rs.getString("LOCATION"));
@@ -508,11 +515,12 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<Branch> getBranchExcutive(BranchReq branchReq) {
+        String SQL;
         if (branchReq.getBranchCode() == null || branchReq.getBranchCode() == "") {
-            SQL = "select * from BRANCH where type='2' order by ID asc";
+            SQL = "select * from BRANCH where type='2' order by ID desc";
             System.out.println("SQL:" + SQL);
         } else {
-            SQL = "select * from BRANCH where type='2' and BRANCH_CODE='" + branchReq.getBranchCode() + "' order by ID asc";
+            SQL = "select * from BRANCH where type='2' and BRANCH_CODE='" + branchReq.getBranchCode() + "' order by ID desc";
             System.out.println("SQL:" + SQL);
         }
 
@@ -534,7 +542,7 @@ public class LoginImpl implements LoginDao {
     //==============================combox branch======================================
     @Override
     public List<ComboBranch> getComboxBranch() {
-        SQL = "select * from V_COMBOBRANCH order by ORDERBY asc";
+        String SQL = "select * from V_COMBOBRANCH order by ORDERBY desc";
         System.out.println("SQL:" + SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
             @Override
@@ -550,7 +558,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<ComboBranch> getComboxBranchStatus() {
-        SQL = "select * from V_COMBOBRANCH where STATUS !='Disabled' order by ORDERBY asc";
+        String SQL = "select * from V_COMBOBRANCH where STATUS !='Disabled' order by ORDERBY desc";
         System.out.println("SQL:" + SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
             @Override
@@ -565,7 +573,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<ComboBranch> getComboxBranchExcutive() {
-        SQL = "select  ORDERBY,BRANCH_CODE,BRANCH_NAME_LAO from BRANCH where type='2' order by BRANCH_CODE desc";
+        String SQL = "select  ORDERBY,BRANCH_CODE,BRANCH_NAME_LAO from BRANCH where type='2' order by BRANCH_CODE desc";
         System.out.println("SQL:" + SQL);
         return IADOCJdbcTemplate.query(SQL, new RowMapper<ComboBranch>() {
             @Override
@@ -580,11 +588,14 @@ public class LoginImpl implements LoginDao {
 
     //==============================combox branch======================================
 //=======================================section service
+
     @Override
     public int saveSection(SectionReq sectionReq) {
-        SQL = "insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'1')";
+        String SQL = "insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'1')";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
-                sectionReq.getSecCode(),
+                //sectionReq.getSecCode(),
+                //random
+                randomKey(),
                 sectionReq.getSecDesc(),
                 sectionReq.getSecDescLao(),
                 sectionReq.getDeptCode()
@@ -593,7 +604,7 @@ public class LoginImpl implements LoginDao {
 
     public int saveSectionExcutive(SectionReq sectionReq) {
         String secCode = "90901";
-        SQL = "insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'2')";
+        String SQL = "insert into sections (SEC_CODE,SEC_DESC,SEC_DESC_LAO,DEPT_CODE,type) values (?,?,?,?,'2')";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 secCode,
                 sectionReq.getSecDesc(),
@@ -604,7 +615,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int updateSection(SectionReq sectionReq) {
-        SQL = "update sections set SEC_CODE=?,SEC_DESC=?,SEC_DESC_LAO=?,DEPT_CODE=? where  id=?";
+        String SQL = "update sections set SEC_CODE=?,SEC_DESC=?,SEC_DESC_LAO=?,DEPT_CODE=? where  id=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 sectionReq.getSecCode(),
                 sectionReq.getSecDesc(),
@@ -617,7 +628,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int delSection(SectionReq sectionReq) {
-        SQL = "delete from sections where  id=?";
+        String SQL = "delete from sections where  id=?";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 sectionReq.getSecId()
         });
@@ -632,7 +643,7 @@ public class LoginImpl implements LoginDao {
         loginLog.setEmail(logReq.get(0).getEmail());
         loginLog.setSecCode(logReq.get(0).getSecCode());
         loginLog.setSecName(logReq.get(0).getSecDescLa());
-        SQL = "insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO,CREATEDATE,TYPE) values(?,?,?,?,?,?,sysdate,'login') ";
+        String SQL = "insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO,CREATEDATE,TYPE) values(?,?,?,?,?,?,sysdate,'login') ";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 loginLog.getUserId(),
                 loginLog.getFullName(),
@@ -655,7 +666,7 @@ public class LoginImpl implements LoginDao {
         loginLog.setSecName(logReq.getSecName());
         loginLog.setDocNo(logReq.getDocNo());
         loginLog.setSubjectName(logReq.getSubjectName());
-        SQL = "insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO," +
+        String SQL = "insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO," +
                 "CREATEDATE,TYPE,DOCNO,SUBJECT_NAME) values(?,?,?,?,?,?,sysdate,'doc',?,?) ";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 loginLog.getUserId(),
@@ -812,7 +823,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public List<Login> CheckUser(DocumentReq documentReq) {
-        SQL = "select * from IADOC.V_LOGIN where USER_ID= '" + documentReq.getMarkerId() + "'";
+        String SQL = "select * from IADOC.V_LOGIN where USER_ID= '" + documentReq.getMarkerId() + "'";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<Login>() {
             @Override
             public Login mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -848,7 +859,7 @@ public class LoginImpl implements LoginDao {
         loginLog.setSecCode(logReq.get(0).getSecCode());
         loginLog.setSecName(logReq.get(0).getSecDescLa());
 
-        SQL = "insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO,CREATEDATE,TYPE,SUBJECT_NAME,NAME_DESC) values(?,?,?,?,?,?,sysdate,'login',?,?) ";
+        String SQL = "insert into login_log(USER_ID,FULLNAME_LA,TEL,EMAIL,SEC_CODE,SEC_DESC_LAO,CREATEDATE,TYPE,SUBJECT_NAME,NAME_DESC) values(?,?,?,?,?,?,sysdate,'login',?,?) ";
         return IADOCJdbcTemplate.update(SQL, new Object[]{
                 loginLog.getUserId(),
                 loginLog.getFullName(),

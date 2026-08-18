@@ -479,8 +479,8 @@ public class DocumentImpl implements DocumentDao {
                     String SQL = "SELECT  a.DOC_KEY,\n" +
                             "                    a.doc_no,b.BRANCH_CODE,b.BRANCH_NAME_LAO\n" +
                             "                    FROM DOC_CREATE a \n" +
-                            "                    JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' \n" +
-                            "                    WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  ORDER BY  a.DOC_NO DESC";
+                            "                    left JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' \n" +
+                            "                    WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL and a.DOC_STATUS NOT IN ('W', 'D')   ORDER BY  a.DOC_NO DESC";
                     log.info("Executing SQL: {}", SQL);
                     data = IADOCJdbcTemplate.query(SQL, new RowMapper<Related>() {
                         @Override
@@ -509,7 +509,7 @@ public class DocumentImpl implements DocumentDao {
         try {
             String SQL = "SELECT  a.DOC_KEY,\n" +
                     "a.doc_no,b.BRANCH_CODE,b.BRANCH_NAME_LAO\n" +
-                    "FROM DOC_CREATE a JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  ORDER BY  a.DOC_NO DESC ";
+                    "FROM DOC_CREATE a LEFT JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  and a.DOC_STATUS NOT IN ('W', 'D')  ORDER BY  a.DOC_NO DESC ";
             log.info("Executing SQL: {}", SQL);
 
             data = IADOCJdbcTemplate.query(SQL, new RowMapper<RelatedShow>() {
@@ -875,7 +875,7 @@ public class DocumentImpl implements DocumentDao {
                 .append(conditType)
                 .append(conditOrder);
         String sql = sb.toString();
-        log.info("show sql:"+sql);
+        log.info("show sql tester:"+sql);
         return IADOCJdbcTemplate.query(sql, new RowMapper<DocumentAudit>() {
             @Override
             public DocumentAudit mapRow(ResultSet rs, int rowNum) throws SQLException {

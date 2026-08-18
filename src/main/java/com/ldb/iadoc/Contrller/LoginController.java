@@ -24,54 +24,89 @@ import com.ldb.iadoc.Model.UserType.UserTypeRes;
 import com.ldb.iadoc.Model.Users.ComboUser.ComboUserReq;
 import com.ldb.iadoc.Model.Users.ComboUser.ComboUserRes;
 import com.ldb.iadoc.Service.LoginService;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Arrays;
+
+/**
+ * Auth/login endpoints plus a grab-bag of Dept/Branch/Section/UserType/combo-box
+ * lookups that historically piggy-backed on {@link LoginService}.
+ * <p>
+ * Every endpoint returns HTTP 200 on the normal business path; success/failure is
+ * signalled inside the JSON body via {@code message.resCode} (see
+ * {@link com.ldb.iadoc.Mesage.Constant}), matching the convention used across the
+ * rest of the API. Unexpected/unhandled errors are converted to a JSON 5xx/4xx
+ * response by {@link com.ldb.iadoc.Exception.GlobalExceptionHandler} instead of
+ * Spring's default HTML error page.
+ */
+@RequiredArgsConstructor
 @RestController
 @CrossOrigin
 @RequestMapping("${base_url}")
 public class LoginController {
-    public static final Logger log = LogManager.getLogger(LoginController.class);
-    @Autowired
-    private LoginService loginService;
-    @CrossOrigin(origins = "*")
-    @GetMapping("/test")
-    public String test() throws Exception{
-        return "hello";
+
+    private static final Logger log = LogManager.getLogger(LoginController.class);
+    private static final String WATERMARK_IMAGE_URL = "https://dehome.ldblao.la/mobile/logo/ldb-logo.gif";
+
+    private final LoginService loginService;
+
+    /**
+     * Watermarks every page of a PDF with a tiled logo. Kept as a REST endpoint for
+     * ad-hoc/manual use; {@link #genPDF2} is the version used programmatically by
+     * {@code DocumentImpl}.
+     */
+    @PostMapping("/Auth/genPDF")
+    public void genPDF(String docPathLa, String fileName) throws Exception {
+        File pdfFile = new File("log/temp.pdf");
+        try {
+            downloadFile(docPathLa, pdfFile);
+
+            try (PdfReader reader = new PdfReader(pdfFile.getAbsolutePath());
+                 PdfWriter writer = new PdfWriter(fileName);
+                 PdfDocument pdfDoc = new PdfDocument(reader, writer)) {
+
+                ImageData imageData = ImageDataFactory.create(new URL(WATERMARK_IMAGE_URL));
+                applyWatermarkGrid(pdfDoc, imageData);
+            }
+        } finally {
+            // Always clean up the downloaded temp file, even if watermarking failed.
+            pdfFile.delete();
+        }
     }
 
+    /**
+     * Same watermarking logic as {@link #genPDF}, streamed directly from a local
+     * path or URL without an intermediate temp file. Not exposed as a REST endpoint
+     * itself - called directly by {@code DocumentImpl} when generating shared PDFs.
+     */
+    public File genPDF2(String docPathLa, String outputPath) throws Exception {
+        log.info("genPDF2: watermarking {} -> {}", docPathLa, outputPath);
 
-    @CrossOrigin(origins = "*")
-    @PostMapping("/Auth/genPDF")
+        try (InputStream in = docPathLa.startsWith("http")
+                ? new URL(docPathLa).openStream()
+                : Files.newInputStream(Paths.get(docPathLa));
+             PdfReader reader = new PdfReader(in);
+             PdfWriter writer = new PdfWriter(outputPath);
+             PdfDocument pdfDoc = new PdfDocument(reader, writer)) {
 
-    public void genPDF(String docPathLa,String fileName) throws Exception {
-        String pdfUrl = docPathLa;
-        String imageUrl = "https://dehome.ldblao.la/mobile/logo/ldb-logo.gif";
-        String outputPath = fileName;
+            ImageData imageData = ImageDataFactory.create(new URL(WATERMARK_IMAGE_URL));
+            applyWatermarkGrid(pdfDoc, imageData);
+        }
 
-        // Download PDF from URL
-        File pdfFile = new File("log/temp.pdf");
-        downloadFile(pdfUrl, pdfFile);
+        return new File(outputPath);
+    }
 
-        // Load PDF
-        PdfReader reader = new PdfReader(pdfFile.getAbsolutePath());
-        PdfWriter writer = new PdfWriter(outputPath);
-        PdfDocument pdfDoc = new PdfDocument(reader, writer);
-
-        // Load image data once
-        ImageData imageData = ImageDataFactory.create(new URL(imageUrl));
-
-        // Define grid: 4 columns x 1 row (4 images per page)
+    private void applyWatermarkGrid(PdfDocument pdfDoc, ImageData imageData) {
         final int cols = 4;
         final int rows = 4;
 
@@ -83,87 +118,30 @@ public class LoginController {
             float cellW = pageW / cols;
             float cellH = pageH / rows;
 
-            Canvas canvas = new Canvas(page, page.getPageSize());
+            try (Canvas canvas = new Canvas(page, page.getPageSize())) {
+                for (int r = 0; r < rows; r++) {
+                    for (int c = 0; c < cols; c++) {
+                        Image img = new Image(imageData);
+                        img.setOpacity(0.2f);
+                        img.scaleToFit(cellW * 0.9f, cellH * 0.9f);
+                        img.setRotationAngle(Math.toRadians(60));
 
-            // Add images in grid
-            for (int r = 0; r < rows; r++) {
-                for (int c = 0; c < cols; c++) {
-                    Image img = new Image(imageData);
-                    img.setOpacity(0.2f); // semi-transparent
-                    img.scaleToFit(cellW * 0.9f, cellH * 0.9f); // fit inside cell
-                    img.setRotationAngle(Math.toRadians(60)); // tilt left 30 degrees
+                        float imgW = img.getImageScaledWidth();
+                        float imgH = img.getImageScaledHeight();
+                        float x = c * cellW + (cellW - imgW) / 2f;
+                        float y = pageH - (r + 1) * cellH + (cellH - imgH) / 2f;
 
-                    float imgW = img.getImageScaledWidth();
-                    float imgH = img.getImageScaledHeight();
-
-                    // Center image in its cell
-                    float x = c * cellW + (cellW - imgW) / 2f;
-                    float y = pageH - (r + 1) * cellH + (cellH - imgH) / 2f;
-
-                    img.setFixedPosition(p, x, y);
-                    canvas.add(img);
-                }
-            }
-
-            canvas.close();
-        }
-
-        pdfDoc.close();
-        pdfFile.delete();
-    }
-
-    public File genPDF2(String docPathLa, String outputPath) throws Exception {
-        log.info("=== genPDF controller for large files ===");
-
-        String imageUrl = "https://dehome.ldblao.la/mobile/logo/ldb-logo.gif";
-        ImageData imageData = ImageDataFactory.create(new URL(imageUrl));
-
-        try (InputStream in = docPathLa.startsWith("http")
-                ? new URL(docPathLa).openStream()
-                : Files.newInputStream(Paths.get(docPathLa));
-             PdfReader reader = new PdfReader(in);
-             PdfWriter writer = new PdfWriter(outputPath);
-             PdfDocument pdfDoc = new PdfDocument(reader, writer)) {
-
-            final int cols = 4;
-            final int rows = 4;
-
-            int totalPages = pdfDoc.getNumberOfPages();
-            for (int p = 1; p <= totalPages; p++) {
-                PdfPage page = pdfDoc.getPage(p);
-                float pageW = page.getPageSize().getWidth();
-                float pageH = page.getPageSize().getHeight();
-                float cellW = pageW / cols;
-                float cellH = pageH / rows;
-
-                try (Canvas canvas = new Canvas(page, page.getPageSize())) {
-                    for (int r = 0; r < rows; r++) {
-                        for (int c = 0; c < cols; c++) {
-                            Image img = new Image(imageData);
-                            img.setOpacity(0.2f);
-                            img.scaleToFit(cellW * 0.9f, cellH * 0.9f);
-                            img.setRotationAngle(Math.toRadians(60));
-
-                            float imgW = img.getImageScaledWidth();
-                            float imgH = img.getImageScaledHeight();
-
-                            float x = c * cellW + (cellW - imgW) / 2f;
-                            float y = pageH - (r + 1) * cellH + (cellH - imgH) / 2f;
-
-                            img.setFixedPosition(p, x, y);
-                            canvas.add(img);
-                        }
+                        img.setFixedPosition(p, x, y);
+                        canvas.add(img);
                     }
                 }
             }
         }
-
-        return new File(outputPath);
     }
 
     private void downloadFile(String urlStr, File outputFile) throws Exception {
         URL url = new URL(urlStr);
-        try (java.io.InputStream in = url.openStream();
+        try (InputStream in = url.openStream();
              java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
             byte[] buffer = new byte[8192];
             int bytesRead;
@@ -173,280 +151,200 @@ public class LoginController {
         }
     }
 
-
-
-    @CrossOrigin(origins = "*")
+    //========================================Auth
     @PostMapping("/Auth/login")
-    public LoginRes login(@RequestBody LoginReq loginReq){
-        log.info("====================================================>Login controller<=========================");
-    LoginRes result =new LoginRes();
-        result = loginService.LoginByUser(loginReq);
-    return result;
+    public ResponseEntity<LoginRes> login(@RequestBody LoginReq loginReq) {
+        log.info("POST /Auth/login - userName={}", loginReq.getUserName());
+        return ResponseEntity.ok(loginService.LoginByUser(loginReq));
     }
 
-    @CrossOrigin(origins = "*")
     @PostMapping("/log/doLogByUser")
-    public LoginRes doLogByUser(@RequestBody login_log loginReq){
-        log.info("====================================================>Login controller<=========================");
-    LoginRes result =new LoginRes();
-        result = loginService.doLog(loginReq);
-    return result;
+    public ResponseEntity<LoginRes> doLogByUser(@RequestBody login_log loginReq) {
+        log.info("POST /log/doLogByUser");
+        return ResponseEntity.ok(loginService.doLog(loginReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/log/doLogByUserRead")
-    public LoginRes doLogByUserRead(@RequestBody login_log loginReq){
-        log.info("====================================================>Login controller<=========================");
-    LoginRes result =new LoginRes();
-        result = loginService.doLog(loginReq);
-    return result;
+    public ResponseEntity<LoginRes> doLogByUserRead(@RequestBody login_log loginReq) {
+        log.info("POST /log/doLogByUserRead");
+        return ResponseEntity.ok(loginService.doLog(loginReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/User/getShowUserInfo")
-    public LoginRes getShowUserInfo(@RequestBody LoginReq loginReq){
-        log.info("====================================================>getShowUserInfo controller<=========================");
-        LoginRes result =new LoginRes();
-        result = loginService.getShowUserInfo(loginReq);
-        return result;
+    public ResponseEntity<LoginRes> getShowUserInfo(@RequestBody LoginReq loginReq) {
+        log.info("POST /User/getShowUserInfo");
+        return ResponseEntity.ok(loginService.getShowUserInfo(loginReq));
     }
 
-    @CrossOrigin(origins = "*")
     @PostMapping("/log/getStatisticLogin")
-    public VWStatisticRes getStatisticLogin(@RequestBody VWStatisticReq loginReq){
-        log.info("====================================================>VWStatisticRes controller<=========================");
-        VWStatisticRes result =new VWStatisticRes();
-        result = loginService.getStatistic(loginReq);
-        return result;
+    public ResponseEntity<VWStatisticRes> getStatisticLogin(@RequestBody VWStatisticReq loginReq) {
+        log.info("POST /log/getStatisticLogin");
+        return ResponseEntity.ok(loginService.getStatistic(loginReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/log/dologStatistic")
-    public VWStatisticRes dologStatistic(@RequestBody VWStatisticReq loginReq){
-        log.info("====================================================>VWStatisticRes controller<=========================");
-        VWStatisticRes result =new VWStatisticRes();
-        result = loginService.dologStatistic(loginReq);
-        return result;
+    public ResponseEntity<VWStatisticRes> dologStatistic(@RequestBody VWStatisticReq loginReq) {
+        log.info("POST /log/dologStatistic");
+        return ResponseEntity.ok(loginService.dologStatistic(loginReq));
     }
 
-
-  @CrossOrigin(origins = "*")
     @PostMapping("/log/dologStatisticDetailsDoc")
-    public VWStatisticLogRes dologStatisticDetailsDoc(@RequestBody VWStatisticReq loginReq){
-        log.info("====================================================>VWStatisticRes controller<=========================");
-      VWStatisticLogRes result =new VWStatisticLogRes();
-        result = loginService.dologStatisticDetailsDoc(loginReq);
-        return result;
+    public ResponseEntity<VWStatisticLogRes> dologStatisticDetailsDoc(@RequestBody VWStatisticReq loginReq) {
+        log.info("POST /log/dologStatisticDetailsDoc");
+        return ResponseEntity.ok(loginService.dologStatisticDetailsDoc(loginReq));
     }
 
-    @CrossOrigin(origins = "*")
     @PostMapping("/log/dologStatisticDetailsLogin")
-    public VWStatisticLogRes dologStatisticDetailsLogin(@RequestBody VWStatisticReq loginReq){
-        log.info("====================================================>ທົດລອງ controller<=========================");
-      VWStatisticLogRes result =new VWStatisticLogRes();
-        result = loginService.dologStatisticDetailsLog(loginReq);
-        return result;
+    public ResponseEntity<VWStatisticLogRes> dologStatisticDetailsLogin(@RequestBody VWStatisticReq loginReq) {
+        log.info("POST /log/dologStatisticDetailsLogin");
+        return ResponseEntity.ok(loginService.dologStatisticDetailsLog(loginReq));
     }
 
-    @CrossOrigin(origins = "*")
     @PostMapping("/UserType/getUserType")
-    public UserTypeRes getUserType(){
-        log.info("====================================================>getUserType controller<=========================");
-        UserTypeRes result = loginService.getUserType();
-        return result;
+    public ResponseEntity<UserTypeRes> getUserType() {
+        log.info("POST /UserType/getUserType");
+        return ResponseEntity.ok(loginService.getUserType());
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Section/getSections")
-    public SectionRes getSections(@RequestBody SectionReq sectionReq){
-        log.info("====================================================>getSections controller<=========================");
-        SectionRes result =new SectionRes();
-        result = loginService.getSections(sectionReq);
-        return result;
+    public ResponseEntity<SectionRes> getSections(@RequestBody SectionReq sectionReq) {
+        log.info("POST /Section/getSections");
+        return ResponseEntity.ok(loginService.getSections(sectionReq));
     }
 
-    @CrossOrigin(origins = "*")
     @PostMapping("/Section/getSectionsData")
-    public SectionRes getSectionsData(@RequestBody SectionReq sectionReq){
-        log.info("====================================================>getSections controller<=========================");
-        SectionRes result =new SectionRes();
-        result = loginService.getSectionData(sectionReq);
-        return result;
+    public ResponseEntity<SectionRes> getSectionsData(@RequestBody SectionReq sectionReq) {
+        log.info("POST /Section/getSectionsData");
+        return ResponseEntity.ok(loginService.getSectionData(sectionReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Auth/Signup")
-    public ReponeRes Signup(@RequestBody SignupReq signupReq) throws ParseException {
-        log.info("====================================================>Signup controller<=========================");
-        log.info("sig user:"+signupReq.getUserName());
-        ReponeRes result =new ReponeRes();
-        result = loginService.Signup(signupReq);
-        return  result;
+    public ResponseEntity<ReponeRes> signup(@RequestBody SignupReq signupReq) throws ParseException {
+        log.info("POST /Auth/Signup - userName={}", signupReq.getUserName());
+        return ResponseEntity.ok(loginService.Signup(signupReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Auth/UpdatesSignUp")
-    public ReponeRes UpdatesSignUp(@RequestBody SignupReq signupReq) throws ParseException {
-        log.info("====================================================>Signup controller<=========================");
-        log.info("sig user:"+signupReq.getUserName());
-
-        ReponeRes result =new ReponeRes();
-
-
-        result = loginService.UpdatesSignUp(signupReq);
-        return  result;
+    public ResponseEntity<ReponeRes> updatesSignUp(@RequestBody SignupReq signupReq) throws ParseException {
+        log.info("POST /Auth/UpdatesSignUp - userName={}", signupReq.getUserName());
+        return ResponseEntity.ok(loginService.UpdatesSignUp(signupReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Auth/DelSignUp")
-    public ReponeRes DelSignUp(@RequestBody SignupReq signupReq) throws ParseException {
-        log.info("====================================================>Signup controller<=========================");
-        log.info("sig user:"+signupReq.getUserName());
-        ReponeRes result =new ReponeRes();
-        result = loginService.DelSignUp(signupReq);
-        return  result;
+    public ResponseEntity<ReponeRes> delSignUp(@RequestBody SignupReq signupReq) throws ParseException {
+        log.info("POST /Auth/DelSignUp - userName={}", signupReq.getUserName());
+        return ResponseEntity.ok(loginService.DelSignUp(signupReq));
     }
-    //chagePassword
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Auth/chagePassword")
-    public LoginChangPwdRes chagePassword(@RequestBody LoginReq loginReq){
-        log.info("====================================================>getShowUserInfo controller<=========================");
-        System.out.println("newPassword:"+loginReq.getNewPwd());
-        LoginChangPwdRes result =new LoginChangPwdRes();
-        result = loginService.getOldInfoOldUser(loginReq);
-        return result;
+    public ResponseEntity<LoginChangPwdRes> chagePassword(@RequestBody LoginReq loginReq) {
+        log.info("POST /Auth/chagePassword - oldUserId={}", loginReq.getOldUserId());
+        return ResponseEntity.ok(loginService.getOldInfoOldUser(loginReq));
     }
+
     //========================================Dept
-    @CrossOrigin(origins = "*")
     @PostMapping("/Dept/saveDept")
-    public ReponeRes saveDept(@RequestBody DeptReq deptReq) throws ParseException {
-        log.info("====================================================>saveDept controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.saveDept(deptReq);
-        return  result;
+    public ResponseEntity<ReponeRes> saveDept(@RequestBody DeptReq deptReq) throws ParseException {
+        log.info("POST /Dept/saveDept");
+        return ResponseEntity.ok(loginService.saveDept(deptReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Dept/updateDept")
-    public ReponeRes updateDept(@RequestBody DeptReq deptReq) throws ParseException {
-        log.info("====================================================>updateDept controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.updateDept(deptReq);
-        return  result;
+    public ResponseEntity<ReponeRes> updateDept(@RequestBody DeptReq deptReq) throws ParseException {
+        log.info("POST /Dept/updateDept");
+        return ResponseEntity.ok(loginService.updateDept(deptReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Dept/delDept")
-    public ReponeRes delDept(@RequestBody DeptReq deptReq) throws ParseException {
-        log.info("====================================================>delDept controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.delDept(deptReq);
-        return  result;
+    public ResponseEntity<ReponeRes> delDept(@RequestBody DeptReq deptReq) throws ParseException {
+        log.info("POST /Dept/delDept");
+        return ResponseEntity.ok(loginService.delDept(deptReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Dept/getDeptList")
-    public DeptRes getDeptList(@RequestBody DeptReq deptReq){
-        log.info("====================================================>getDeptList controller<=========================");
-        DeptRes result = new DeptRes();
-        result = loginService.getDeptList(deptReq);
-        return  result;
+    public ResponseEntity<DeptRes> getDeptList(@RequestBody DeptReq deptReq) {
+        log.info("POST /Dept/getDeptList");
+        return ResponseEntity.ok(loginService.getDeptList(deptReq));
     }
+
     //========================================Branch
-    @CrossOrigin(origins = "*")
     @PostMapping("/Branch/saveBranch")
-    public ReponeRes saveBranch(@RequestBody BranchReq branchReq) throws ParseException {
-        log.info("====================================================>saveBranch controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.saveBranch(branchReq);
-        return  result;
+    public ResponseEntity<ReponeRes> saveBranch(@RequestBody BranchReq branchReq) throws ParseException {
+        log.info("POST /Branch/saveBranch");
+        return ResponseEntity.ok(loginService.saveBranch(branchReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Branch/updateBranch")
-    public ReponeRes updateBranch(@RequestBody BranchReq branchReq) throws ParseException {
-        log.info("====================================================>updateBranch controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.updateBranch(branchReq);
-        return  result;
+    public ResponseEntity<ReponeRes> updateBranch(@RequestBody BranchReq branchReq) throws ParseException {
+        log.info("POST /Branch/updateBranch");
+        return ResponseEntity.ok(loginService.updateBranch(branchReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Branch/delBranch")
-    public ReponeRes delBranch(@RequestBody BranchReq branchReq) throws ParseException {
-        log.info("====================================================>delBranch controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.delBranch(branchReq);
-        return  result;
+    public ResponseEntity<ReponeRes> delBranch(@RequestBody BranchReq branchReq) throws ParseException {
+        log.info("POST /Branch/delBranch");
+        return ResponseEntity.ok(loginService.delBranch(branchReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Branch/getBranchList")
-    public BranchRes getBranchList(@RequestBody BranchReq branchReq){
-        log.info("====================================================>getBranchList controller<=========================");
-        BranchRes result = new BranchRes();
-        result = loginService.getBranchList(branchReq);
-        return  result;
+    public ResponseEntity<BranchRes> getBranchList(@RequestBody BranchReq branchReq) {
+        log.info("POST /Branch/getBranchList");
+        return ResponseEntity.ok(loginService.getBranchList(branchReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Branch/getBranchListAll")
-    public BranchRes getBranchListAll(){
-        log.info("====================================================>getBranchListAll controller<=========================");
-        BranchRes result = new BranchRes();
-        result = loginService.getBranchListAll();
-        return  result;
+    public ResponseEntity<BranchRes> getBranchListAll() {
+        log.info("POST /Branch/getBranchListAll");
+        return ResponseEntity.ok(loginService.getBranchListAll());
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Branch/getBranchListStatus")
-    public BranchRes getBranchListStatus(@RequestBody BranchReq branchReq){
-        log.info("====================================================>getBranchList controller<=========================");
-        BranchRes result = new BranchRes();
-        result = loginService.getBranchListStatus(branchReq);
-        return  result;
+    public ResponseEntity<BranchRes> getBranchListStatus(@RequestBody BranchReq branchReq) {
+        log.info("POST /Branch/getBranchListStatus");
+        return ResponseEntity.ok(loginService.getBranchListStatus(branchReq));
     }
-    //=========================section =========
-    @CrossOrigin(origins = "*")
+
+    //========================================Section
     @PostMapping("/Section/SaveSection")
-    public ReponeRes SaveSection(@RequestBody SectionReq sectionReq) throws ParseException {
-        log.info("====================================================>SaveSection controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.saveSection(sectionReq);
-        return  result;
+    public ResponseEntity<ReponeRes> saveSection(@RequestBody SectionReq sectionReq) throws ParseException {
+        log.info("POST /Section/SaveSection");
+        return ResponseEntity.ok(loginService.saveSection(sectionReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Section/updateSection")
-    public ReponeRes updateSection(@RequestBody SectionReq sectionReq) throws ParseException {
-        log.info("====================================================>updateSection controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.upDateSection(sectionReq);
-        return  result;
+    public ResponseEntity<ReponeRes> updateSection(@RequestBody SectionReq sectionReq) throws ParseException {
+        log.info("POST /Section/updateSection");
+        return ResponseEntity.ok(loginService.upDateSection(sectionReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Section/delSection")
-    public ReponeRes delSection(@RequestBody SectionReq sectionReq) throws ParseException {
-        log.info("====================================================>delSection controller<=========================");
-        ReponeRes result =new ReponeRes();
-        result = loginService.delSection(sectionReq);
-        return  result;
+    public ResponseEntity<ReponeRes> delSection(@RequestBody SectionReq sectionReq) throws ParseException {
+        log.info("POST /Section/delSection");
+        return ResponseEntity.ok(loginService.delSection(sectionReq));
     }
-    @CrossOrigin(origins = "*")
+
+    //========================================Combo-box lookups
     @PostMapping("/Branch/getComboxBranch")
-    public ComboBranchRes getComboxBranch(){
-        log.info("====================================================>getComboxBranch controller<=========================");
-        ComboBranchRes result = new ComboBranchRes();
-        result = loginService.getComboxBranch();
-        return  result;
+    public ResponseEntity<ComboBranchRes> getComboxBranch() {
+        log.info("POST /Branch/getComboxBranch");
+        return ResponseEntity.ok(loginService.getComboxBranch());
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Branch/getComboxBranchStatus")
-    public ComboBranchRes getComboxBranchStatus(){
-        log.info("====================================================>getComboxBranch controller<=========================");
-        ComboBranchRes result = new ComboBranchRes();
-        result = loginService.getComboxBranchStatus();
-        return  result;
+    public ResponseEntity<ComboBranchRes> getComboxBranchStatus() {
+        log.info("POST /Branch/getComboxBranchStatus");
+        return ResponseEntity.ok(loginService.getComboxBranchStatus());
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/Section/getComboxSections")
-    public ComboSectionRes getComboxSections(@RequestBody ComboSectionReq sectionReq){
-        log.info("====================================================>getComboxSections controller<=========================");
-        log.info("bb:"+ Arrays.toString(sectionReq.getBranchCode()));
-        ComboSectionRes result =new ComboSectionRes();
-        result = loginService.getComboxSections(sectionReq);
-        return result;
+    public ResponseEntity<ComboSectionRes> getComboxSections(@RequestBody ComboSectionReq sectionReq) {
+        log.info("POST /Section/getComboxSections - branchCode={}", Arrays.toString(sectionReq.getBranchCode()));
+        return ResponseEntity.ok(loginService.getComboxSections(sectionReq));
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/User/getComboxUser")
-    public ComboUserRes getComboxUser(@RequestBody ComboUserReq loginReq){
-        log.info("====================================================>getComboxUser controller<=========================");
-        ComboUserRes result =new ComboUserRes();
-        result = loginService.getComboxUser(loginReq);
-        return result;
+    public ResponseEntity<ComboUserRes> getComboxUser(@RequestBody ComboUserReq loginReq) {
+        log.info("POST /User/getComboxUser");
+        return ResponseEntity.ok(loginService.getComboxUser(loginReq));
     }
 }
