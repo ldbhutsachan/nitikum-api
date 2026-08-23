@@ -50,7 +50,7 @@ public class DashBoardImpl implements DashBoardDao {
         }
 
         String sql = sb.toString();
-
+        log.info("sql: {}", sql);
         // Build params dynamically
         Object[] params;
         if (conStartDate != null && conEndDate != null) {

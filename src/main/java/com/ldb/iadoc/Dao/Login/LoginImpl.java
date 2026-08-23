@@ -363,7 +363,7 @@ public class LoginImpl implements LoginDao {
 
     @Override
     public int DelSignUp(SignupReq signupReq) throws ParseException {
-        String SQL = "delete from users where id='" + signupReq.getId() + "'";
+        String SQL = "update users set LOGIN_STATUS='D' where id='" + signupReq.getId() + "'";
         return IADOCJdbcTemplate.update(SQL);
     }
 
