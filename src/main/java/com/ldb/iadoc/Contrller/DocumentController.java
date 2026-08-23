@@ -154,25 +154,16 @@ public class DocumentController {
     @CrossOrigin(origins = "*")
     @PostMapping("/Share/getShareDocumentReport")
     public GroupHeaderRes getShareDocumentReport(@RequestBody GroupHeaderReq documentReq){
-        log.info("====================================================>get Report controller 99<=========================");
-        System.out.println("getStartDate:"+documentReq.getStartDate());
-        System.out.println("getEndDate:"+documentReq.getEndDate());
-        System.out.println("getRelated:"+documentReq.getRelated_Name());
-        System.out.println("getRelated status:"+documentReq.getStatus());
-        GroupHeaderRes result =new GroupHeaderRes();
-        result = documentService.getShareDocumentReport(documentReq);
-        return result;
+        log.info("POST /Share/getShareDocumentReport - startDate={}, endDate={}, related={}, status={}",
+                documentReq.getStartDate(), documentReq.getEndDate(), documentReq.getRelated_Name(), documentReq.getStatus());
+        return documentService.getShareDocumentReport(documentReq);
     }
     @CrossOrigin(origins = "*")
     @PostMapping("/Share/getShareDocumentReportText02")
     public GroupHeaderRes getShareDocumentReportText02(@RequestBody GroupHeaderReq documentReq){
-        log.info("====================================================>get Report controller<=========================");
-        System.out.println("getStartDate:"+documentReq.getStartDate());
-        System.out.println("getEndDate:"+documentReq.getEndDate());
-        System.out.println("getRelated:"+documentReq.getRelated_Name());
-        GroupHeaderRes result =new GroupHeaderRes();
-        result = documentService.getShareDocumentReportText02(documentReq);
-        return result;
+        log.info("POST /Share/getShareDocumentReportText02 - startDate={}, endDate={}, related={}",
+                documentReq.getStartDate(), documentReq.getEndDate(), documentReq.getRelated_Name());
+        return documentService.getShareDocumentReportText02(documentReq);
     }
     //===============================================================> get data show meeting <===============================
     @CrossOrigin(origins = "*")
@@ -264,10 +255,13 @@ public class DocumentController {
                     log.warn("{} file has .pdf extension but is not a valid PDF header: {}", label, originalFilename);
                 }
 
-                // Step 3: Upload (generated PDF if watermark succeeded, otherwise original)
+                // Step 3: Upload (generated PDF if watermark succeeded, otherwise original).
+                // uploadDirectoryDocLaGen throws (with the real cause attached) on any
+                // failure - network error, timeout, or non-2xx response from the upload
+                // server - so it's handled below by the generic catch, which preserves
+                // that cause for logging instead of reporting a blank/unknown failure.
                 String uploadedPath = mediaUploadService.uploadDirectoryDocLaGen(fileToUpload, uuid);
                 if (uploadedPath == null || uploadedPath.isBlank()) {
-                    // uploadDirectoryDocLaGen swallows its own exceptions and returns "" on failure.
                     throw new DocumentFileUploadException(
                             "ອັບໂຫລດໄຟລ໌ບໍ່ສໍາເລັດ (" + label + "): " + originalFilename);
                 }
@@ -305,7 +299,7 @@ public class DocumentController {
                     @RequestParam(value = "old_image1", required = false) String  old_image1,
                     @RequestParam(value = "old_image2", required = false) String  old_image2
     ){
-        log.info("====================================================>SaveDoc controller<=========================");
+        log.info("POST /Document/SaveDoc - docNo={}, subjectName={}, sharingType={}", docNo, subjectName, sharingType);
         try {
             DocumentReq data = new DocumentReq();
             data.setRelated_No(related_No);
@@ -324,27 +318,27 @@ public class DocumentController {
 
             //==========================ກວດສອບ ໄຟທີ 1==================================
             if (filesEn == null || filesEn.length == 0) {
-                log.warn("************* file EN is null ****************");
+                log.warn("SaveDoc: no EN files uploaded, reusing old_image1");
                 data.setDocPath(old_image1);
             } else {
-                log.info("************* processing EN files ****************");
+                log.info("SaveDoc: processing {} EN file(s)", filesEn.length);
                 List<String> fileNamesEn = processFilesOrThrow(filesEn, "EN");
                 data.setDocPath(fileNamesEn.isEmpty() ? null : String.join(",", fileNamesEn));
             }
 
             //   ==========================ກວດສອບ ໄຟທີ 2==================================
             if (filesLao == null || filesLao.length == 0) {
-                log.warn("************* file LAO is null ****************");
+                log.warn("SaveDoc: no LAO files uploaded, reusing old_image2");
                 data.setDocPathLa(old_image2);
             } else {
-                log.info("************* processing Lao files ****************");
+                log.info("SaveDoc: processing {} LAO file(s)", filesLao.length);
                 List<String> fileNamesLa = processFilesOrThrow(filesLao, "LAO");
                 data.setDocPathLa(fileNamesLa.isEmpty() ? null : String.join(",", fileNamesLa));
             }
 
-            List<KeyReq> rspListData = documentService.getMaxKey();
-            String keyDocNo  = rspListData.get(0).getKeyDocNo();
-            return documentService.SaveDocument(data, keyDocNo);
+            // Doc key generation now happens inside SaveDocument itself, under the same
+            // lock/transaction as the insert that consumes it - see SaveDocument's javadoc.
+            return documentService.SaveDocument(data);
 
         } catch (DocumentFileUploadException e) {
             // Couldn't save/upload one of the files to the file server: report it clearly

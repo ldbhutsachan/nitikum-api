@@ -8,11 +8,11 @@ public class Constant {
     public static String msgReject="ປະຕິເສດລາຍການຂໍ້ມູນສໍາເລັດ";
     public static String msgAudit="ອະນຸມັດລາຍການຂໍ້ມູນສໍາເລັດ";
     public static String msgUpdate="ເເກ້ໄຂຂໍ້ມູນສໍາເລັດ";
-    public static String msgDelete="ລິບຂໍ້ມູນສໍາເລັດ";
+    public static String msgDelete="ລຶບຂໍ້ມູນສໍາເລັດ";
     public static String msgFail="ບໍ່ສໍາເລັດ";
     public static String msgDoneSave="ບັນທຶກຂໍ້ມູນສໍາເລັດ";
     public static String msgDoneUpdate="ເເກ້ໄຂຂໍ້ມູນສໍາເລັດ";
-    public static String msgDoneDelete="ລິບຂໍ້ມູນສໍາເລັດ";
+    public static String msgDoneDelete="ລຶບຂໍ້ມູນສໍາເລັດ";
     public static String msgDoneRegister="ລົງທະບຽນເຂົ້າໃຊ້ລະບົບສໍາເລັດ";
     public static String msgFailRegister="ລົງທະບຽນເຂົ້າໃຊ້ລະບົບບໍ່ສໍາເລັດ!!! ກະລຸນາກວດສອບຂໍ້ມູນຂອງທ່ານຄືນ";
     public static String msgFailSave="ບັນທຶກຂໍ້ມູນບໍ່ສໍາເລັດ";

@@ -8,9 +8,16 @@ import java.util.List;
 
 public interface DocumentDao {
     public List<KeyReq> getMaxKey();
+    /**
+     * Same "next doc key" computation as {@link #getMaxKey()}, but locks the
+     * current max row (SELECT ... FOR UPDATE) so it must be called inside the same
+     * transaction as the subsequent insert - otherwise the lock is released before
+     * it can do anything and offers no protection.
+     */
+    public String getNextDocKeyForUpdate();
     public int updateDocExcutive(DocumentReq documentReq) throws ParseException;
     public List<DocumentAudit> getWaitListCheckExcutive(DocumentReq documentReq);
-    public int SaveDocumentExcutive(DocumentReq documentReq) throws ParseException;
+   // public int SaveDocumentExcutive(DocumentReq documentReq) throws ParseException;
     public int rejectDocument(DocumentReq documentReq);
     public int saveSharingDo(DocumentReq documentReq);
     public int ReadData(DocumentReq documentReq);

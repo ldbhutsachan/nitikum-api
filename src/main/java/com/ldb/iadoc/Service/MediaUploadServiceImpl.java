@@ -12,19 +12,22 @@ import com.itextpdf.layout.element.Image;
 import com.ldb.iadoc.Dao.upload.MediaUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +51,42 @@ public class MediaUploadServiceImpl implements MediaUploadService {
     @Value("${media.upload.url_pdf}")
     private String uploadURLPDF;
 
+    private static final int UPLOAD_CONNECT_TIMEOUT_MS = 15_000;
+    // Large signed PDFs (base64-encoded in the body) can legitimately take a while to
+    // transfer, so give the socket a generous timeout instead of guessing low.
+    private static final int UPLOAD_SOCKET_TIMEOUT_MS = 120_000;
+
+    private static RequestConfig uploadRequestConfig() {
+        return RequestConfig.custom()
+                .setConnectTimeout(UPLOAD_CONNECT_TIMEOUT_MS)
+                .setConnectionRequestTimeout(UPLOAD_CONNECT_TIMEOUT_MS)
+                .setSocketTimeout(UPLOAD_SOCKET_TIMEOUT_MS)
+                .build();
+    }
+
+    /**
+     * Executes the upload POST and returns the response body. Unlike the old
+     * fire-and-forget calls, this never silently treats a failure as success: any
+     * connection error propagates as-is, and a non-2xx response is turned into an
+     * IOException carrying the status code and response body so the real cause is
+     * visible in the logs instead of being swallowed into a blank "" return value.
+     */
+    private String executeUpload(HttpPost httpPost) throws IOException {
+        httpPost.setConfig(uploadRequestConfig());
+        try (CloseableHttpClient client = HttpClients.createDefault();
+             CloseableHttpResponse response = client.execute(httpPost)) {
+            int status = response.getStatusLine().getStatusCode();
+            String body = response.getEntity() != null
+                    ? EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8)
+                    : "";
+            if (status < 200 || status >= 300) {
+                throw new IOException("Upload server returned HTTP " + status + ": "
+                        + (body.length() > 500 ? body.substring(0, 500) : body));
+            }
+            return body;
+        }
+    }
+
     public String uploadDirectoryGEN(File file) {
         try {
             log.info("=======start =======:"+file.getName());
@@ -68,7 +107,6 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             log.info("New Generate File Name {}", newFileName);
 
             log.info("Begin To Calling Http Request Upload URL: {}", uploadURL);
-            HttpClient client = HttpClients.createDefault();
             HttpPost httpPost;
             if ("pdf".equalsIgnoreCase(extension)) {
                 httpPost = new HttpPost(uploadURLPDF);
@@ -83,8 +121,8 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             httpPost.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 
             log.info("Start To Post Upload File ...");
-            HttpResponse rest = client.execute(httpPost);
-            log.info("Finish Upload, Response Status: {}", rest.getStatusLine());
+            executeUpload(httpPost);
+            log.info("Finish Upload: {}", newFileName);
 
             return uploadPath + newFileName;
         } catch (Exception ex) {
@@ -145,6 +183,7 @@ public class MediaUploadServiceImpl implements MediaUploadService {
 
     @Override
     public String uploadDirectoryDocLaGen(File file, UUID uuid) {
+        String fileName;
         try {
             log.info("Begin Convert File To Base64 String");
 
@@ -165,14 +204,13 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             log.info("Media File Extension Is {}", extension);
 
             // Generate random media name (always enforce extension if present)
-            String fileName = extension.isEmpty()
+            fileName = extension.isEmpty()
                     ? uuid.toString()
                     : uuid.toString() + "." + extension;
 
             log.info("New Generated File Name {}", fileName);
 
             // Choose upload URL based on extension
-            HttpClient client = HttpClients.createDefault();
             HttpPost httpPost = "pdf".equals(extension)
                     ? new HttpPost(uploadURLPDF)
                     : new HttpPost(uploadURL);
@@ -185,15 +223,18 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             httpPost.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 
             log.info("Start To Post Upload File ...");
-            HttpResponse response = client.execute(httpPost);
-            log.info("Finish File Upload, status: {}", response.getStatusLine());
-
-            return uploadPath + fileName;
+            executeUpload(httpPost);
+            log.info("Finish File Upload: {}", fileName);
 
         } catch (Exception ex) {
+            // Surface the real cause instead of swallowing it into a blank "" return -
+            // the caller (DocumentController) logs this with a full stack trace, and
+            // that's the only place the actual reason (timeout, connection refused,
+            // HTTP 4xx/5xx from the upload server, etc.) is visible.
             log.error("Error uploading file {}", file.getName(), ex);
-            return "";
+            throw new RuntimeException("Upload failed for " + file.getName() + ": " + ex.getMessage(), ex);
         }
+        return uploadPath + fileName;
     }
     @Override
     public String uploadDirectoryDocLa(MultipartFile file) {
@@ -215,7 +256,6 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             log.info("New Generate File Name {}" + fileName);
 
             log.info("Begin To Calling Http Request Image Upload URL: {} ", uploadURL);
-            HttpClient client = HttpClients.createDefault();
             HttpPost httpPost;
             if(extension.toLowerCase().equals("pdf")){
                 httpPost = new HttpPost(uploadURLPDF);
@@ -230,11 +270,11 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
             log.info("Start To Post Upload Image ...");
-            HttpResponse rest = client.execute(httpPost);
+            executeUpload(httpPost);
             log.info("Finish Image Upload");
             return uploadPath + fileName;
         }catch (Exception ex){
-            ex.printStackTrace();
+            log.error("Error uploading LAO file {}", file.getOriginalFilename(), ex);
             return "";
         }
 
@@ -258,7 +298,6 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             log.info("New Generate File Name {}" + fileName);
 
             log.info("Begin To Calling Http Request Image Upload URL: {} ", uploadURL);
-            HttpClient client = HttpClients.createDefault();
             HttpPost httpPost;
             if(extension.toLowerCase().equals("pdf")){
                 httpPost = new HttpPost(uploadURLPDF);
@@ -273,11 +312,11 @@ public class MediaUploadServiceImpl implements MediaUploadService {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
             log.info("Start To Post Upload Image ...");
-            HttpResponse rest = client.execute(httpPost);
+            executeUpload(httpPost);
             log.info("Finish Image Upload");
             return uploadPath + fileName;
         }catch (Exception ex){
-            ex.printStackTrace();
+            log.error("Error uploading EN file {}", file.getOriginalFilename(), ex);
             return "";
         }
 

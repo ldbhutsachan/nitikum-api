@@ -17,6 +17,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -45,12 +47,24 @@ public class DocumentService {
     }
 
 
-    public ReponeRes SaveDocument(DocumentReq documentReq,String keyDocNo) throws ParseException {
+    /**
+     * Persists a document plus its sharing/related-branch rows as one unit: if any
+     * of the four inserts below fails, everything rolls back instead of leaving an
+     * orphaned DOC_CREATE row with no matching DOC_SHARING/RELATED rows.
+     * <p>
+     * The doc key is generated in here (not passed in) via a locking read
+     * ({@link DocumentImpl#getNextDocKeyForUpdate()}) so the "read max key" and the
+     * insert that consumes it run on the same connection/transaction - the lock is
+     * held until commit, so two concurrent saves can no longer compute the same key.
+     */
+    @Transactional
+    public ReponeRes SaveDocument(DocumentReq documentReq) throws ParseException {
         ReponeRes result = new ReponeRes();
         Message message = new Message();
         int check = 0;
         int checkSharing = 0;
         try {
+            String keyDocNo = documentImpl.getNextDocKeyForUpdate();
             if(documentReq.getDocDate().equals("")){
                 documentReq.setDocDate(documentReq.getDocDate());
             }else {
@@ -90,6 +104,10 @@ public class DocumentService {
                 if (checkSharing <= 0) {
                     log.warn("SaveDocument: sharing insert failed for docNo={}", documentReq.getDocNo());
                 }
+                // Nothing threw, but the write didn't fully succeed - roll back the whole
+                // batch instead of leaving a half-saved document (e.g. DOC_CREATE row with
+                // no matching DOC_SHARING row) while telling the caller it failed.
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
                 message.setResCode(Constant.codeError);
                 message.setResMgs(Constant.msgFailSave);
                 result.setMessage(message);
@@ -97,6 +115,7 @@ public class DocumentService {
             }
         }catch (Exception e){
             log.error("SaveDocument failed for docNo={}: {}", documentReq.getDocNo(), e.getMessage(), e);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             message.setResCode(Constant.codeError);
             message.setResMgs(Constant.msgFailSave);
             result.setMessage(message);
@@ -208,41 +227,41 @@ public class DocumentService {
         return  result;
     }
 
-    public ReponeRes SaveDocExcutive(DocumentReq documentReq) throws ParseException {
-        ReponeRes result = new ReponeRes();
-        Message message = new Message();
-        int check = 0;
-        check= documentImpl.SaveDocumentExcutive(documentReq);
-        try {
-            log.info("check:"+check);
-            if (check > 0) {
-                message.setResCode(Constant.codeDone);
-                message.setResMgs(Constant.msgDone);
-                result.setMessage(message);
-                return result;
-            }else {
-                message.setResCode(Constant.codeError);
-                message.setResMgs(Constant.msgFail);
-                result.setMessage(message);
-                return result;
-            }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
-        }
-        return  result;
-    }
+//    public ReponeRes SaveDocExcutive(DocumentReq documentReq) throws ParseException {
+//        ReponeRes result = new ReponeRes();
+//        Message message = new Message();
+//        int check = 0;
+//        check= documentImpl.SaveDocumentExcutive(documentReq);
+//        try {
+//
+//            if (check > 0) {
+//                message.setResCode(Constant.codeDone);
+//                message.setResMgs(Constant.msgDone);
+//                result.setMessage(message);
+//                return result;
+//            }else {
+//                message.setResCode(Constant.codeError);
+//                message.setResMgs(Constant.msgFail);
+//                result.setMessage(message);
+//                return result;
+//            }
+//        }catch (Exception e){
+//            if (e instanceof NullPointerException) {
+//                System.out.println("NullPointerException occurred");
+//            } else if (e instanceof IllegalArgumentException) {
+//                System.out.println("IllegalArgumentException occurred");
+//            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+//                // Handle ArrayIndexOutOfBoundsException
+//                System.out.println("ArrayIndexOutOfBoundsException occurred");
+//            } else {
+//                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+//            }
+//            String errorMessage = e.getMessage();
+//            System.out.println("Error message: " + errorMessage);
+//            e.printStackTrace();
+//        }
+//        return  result;
+//    }
     public ReponeRes updateDocExcutive(DocumentReq documentReq) throws ParseException {
         ReponeRes result = new ReponeRes();
         Message message = new Message();
@@ -443,279 +462,178 @@ public class DocumentService {
     public GroupHeaderRes getShareDocumentReport(GroupHeaderReq documentReq){
         Message message = new Message();
         GroupHeaderRes result = new GroupHeaderRes();
-        List<DocumentAudit> listData = new ArrayList<>();
-            listData = documentImpl.getShareDocumentReport(documentReq);
-        List<Related> relatedList = documentImpl.getRsplistBranCh();
-        GroupHeaderReport headerSum = new GroupHeaderReport();
-        List<DocumentAudit> resDataItems = new ArrayList<>();
-        List<String> refIds = listData.stream()
-                .map(DocumentAudit::getRelated_Name)
-                .distinct()
-                .collect(Collectors.toList());
-
-        List<String> docName = listData.stream()
-                .map(DocumentAudit::getDocDescLao)
-                .distinct()
-                .collect(Collectors.toList());
-
-        List<GroupHeader> headers = new ArrayList<>();
-        List<GroupHeaderReport> HeaderTotal = new ArrayList<>();
-
-        for (String docNameList : docName) {
-            GroupHeaderReport groupHeaderTotal = new GroupHeaderReport();
-            String headerSecName = listData.stream()
-                    .filter(r -> r.getDocDescLao() != null && r.getDocDescLao().equals(docNameList)) // compare the `RelatedId` with `reNo`
-                    .map(DocumentAudit::getDocDescLao) // Assuming `Related` has a method `getRelatedName()`
-                    .findFirst()
-                    .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
-            groupHeaderTotal.setSecName(headerSecName);
-            Long totalAmt = listData.stream().filter(r -> r.getDocDescLao().equals(docNameList))
-                    .map(DocumentAudit::getDocNo).count();
-            groupHeaderTotal.setAmt(totalAmt);
-            HeaderTotal.add(groupHeaderTotal);
-        }
-
-        for (String reNo : refIds) {
-            GroupHeader groupHeader = new GroupHeader();
-            String matchingRelatedName = relatedList.stream()
-                    .filter(r -> r.getRelatedId() != null && r.getRelatedId().equals(reNo)) // compare the `RelatedId` with `reNo`
-                    .map(Related::getRelatedName) // Assuming `Related` has a method `getRelatedName()`
-                    .findFirst()
-                    .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
-            groupHeader.setRelated_Name(matchingRelatedName);
-
-            Long totalRow = listData.stream().filter(r -> r.getRelated_Name().equals(reNo))
-                    .map(DocumentAudit::getDocNo).count();
-            groupHeader.setRelated_amt(String.valueOf(totalRow));
-            headers.add(groupHeader);
-            resDataItems = new ArrayList<>();
-            for (DocumentAudit rspList : listData) {
-                if(rspList.getRelated_Name().equals(reNo)) {
-                    DocumentAudit rsShow = new DocumentAudit();
-                    rsShow.setTypeDoc(rspList.getTypeDoc());
-                    rsShow.setRelated_Name(rspList.getRelated_Name());
-                    rsShow.setConnects(rspList.getConnects());
-                    rsShow.setTaiMard(rspList.getTaiMard());
-                    rsShow.setYearIn(rspList.getYearIn());
-                    rsShow.setTaiMardDes(rspList.getTaiMardDes());
-                    rsShow.setYearInDes(rspList.getYearInDes());
-                    rsShow.setId(rspList.getId());
-                    rsShow.setSubjectName(rspList.getSubjectName());
-                    rsShow.setApproveDate(rspList.getApproveDate());
-                    rsShow.setDocNo(rspList.getDocNo());
-                    rsShow.setSubjectName(rspList.getSubjectName());
-                    rsShow.setRelated(rspList.getRelated());
-                    rsShow.setDepDescEN(rspList.getDepDescEN());
-                    rsShow.setDepDescLAO(rspList.getDepDescLAO());
-                    rsShow.setDocPath(rspList.getDocPath());
-                    rsShow.setCreateDate(rspList.getCreateDate());
-                    rsShow.setMarkerId(rspList.getMarkerId());
-                    rsShow.setUserName(rspList.getUserName());
-                    rsShow.setDocType(rspList.getDocType());
-                    rsShow.setDocDescEn(rspList.getDocDescEn());
-                    rsShow.setDocDescLao(rspList.getDocDescLao());
-                    rsShow.setDocStatus(rspList.getDocStatus());
-                    rsShow.setSharingType(rspList.getSharingType());
-                    rsShow.setDocPathLa(rspList.getDocPathLa());
-                    rsShow.setDocDate(rspList.getDocDate());
-                    rsShow.setCreateBy(rspList.getCreateBy());
-                    resDataItems.add(rsShow);
-                }
-            }
-            groupHeader.setDetails(resDataItems);
-        }
         try {
+            List<DocumentAudit> listData = documentImpl.getShareDocumentReport(documentReq);
+            List<Related> relatedList = documentImpl.getRsplistBranCh();
+            List<DocumentAudit> resDataItems;
+            List<String> refIds = listData.stream()
+                    .map(DocumentAudit::getRelated_Name)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            List<String> docName = listData.stream()
+                    .map(DocumentAudit::getDocDescLao)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            List<GroupHeader> headers = new ArrayList<>();
+            List<GroupHeaderReport> HeaderTotal = new ArrayList<>();
+
+            for (String docNameList : docName) {
+                GroupHeaderReport groupHeaderTotal = new GroupHeaderReport();
+                String headerSecName = listData.stream()
+                        .filter(r -> Objects.equals(r.getDocDescLao(), docNameList))
+                        .map(DocumentAudit::getDocDescLao)
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
+                groupHeaderTotal.setSecName(headerSecName);
+                Long totalAmt = listData.stream().filter(r -> Objects.equals(r.getDocDescLao(), docNameList))
+                        .map(DocumentAudit::getDocNo).count();
+                groupHeaderTotal.setAmt(totalAmt);
+                HeaderTotal.add(groupHeaderTotal);
+            }
+
+            for (String reNo : refIds) {
+                GroupHeader groupHeader = new GroupHeader();
+                String matchingRelatedName = relatedList.stream()
+                        .filter(r -> Objects.equals(r.getRelatedId(), reNo))
+                        .map(Related::getRelatedName)
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse("Unknown Branch"); // Default to "Unknown Branch" if no match is found
+                groupHeader.setRelated_Name(matchingRelatedName);
+
+                Long totalRow = listData.stream().filter(r -> Objects.equals(r.getRelated_Name(), reNo))
+                        .map(DocumentAudit::getDocNo).count();
+                groupHeader.setRelated_amt(String.valueOf(totalRow));
+                headers.add(groupHeader);
+                resDataItems = new ArrayList<>();
+                for (DocumentAudit rspList : listData) {
+                    if (Objects.equals(rspList.getRelated_Name(), reNo)) {
+                        DocumentAudit rsShow = new DocumentAudit();
+                        rsShow.setTypeDoc(rspList.getTypeDoc());
+                        rsShow.setRelated_Name(rspList.getRelated_Name());
+                        rsShow.setConnects(rspList.getConnects());
+                        rsShow.setTaiMard(rspList.getTaiMard());
+                        rsShow.setYearIn(rspList.getYearIn());
+                        rsShow.setTaiMardDes(rspList.getTaiMardDes());
+                        rsShow.setYearInDes(rspList.getYearInDes());
+                        rsShow.setId(rspList.getId());
+                        rsShow.setSubjectName(rspList.getSubjectName());
+                        rsShow.setApproveDate(rspList.getApproveDate());
+                        rsShow.setDocNo(rspList.getDocNo());
+                        rsShow.setSubjectName(rspList.getSubjectName());
+                        rsShow.setRelated(rspList.getRelated());
+                        rsShow.setDepDescEN(rspList.getDepDescEN());
+                        rsShow.setDepDescLAO(rspList.getDepDescLAO());
+                        rsShow.setDocPath(rspList.getDocPath());
+                        rsShow.setCreateDate(rspList.getCreateDate());
+                        rsShow.setMarkerId(rspList.getMarkerId());
+                        rsShow.setUserName(rspList.getUserName());
+                        rsShow.setDocType(rspList.getDocType());
+                        rsShow.setDocDescEn(rspList.getDocDescEn());
+                        rsShow.setDocDescLao(rspList.getDocDescLao());
+                        rsShow.setDocStatus(rspList.getDocStatus());
+                        rsShow.setSharingType(rspList.getSharingType());
+                        rsShow.setDocPathLa(rspList.getDocPathLa());
+                        rsShow.setDocDate(rspList.getDocDate());
+                        rsShow.setCreateBy(rspList.getCreateBy());
+                        resDataItems.add(rsShow);
+                    }
+                }
+                groupHeader.setDetails(resDataItems);
+            }
+
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
-                result.setMessage(message);
-                result.setGroupHeader(headers);
-                result.setGroupHeaderTotal(HeaderTotal);
-                return result;
             } else {
                 message.setResCode(Constant.codeDataNotFound);
                 message.setResMgs(Constant.msgDataNotFound);
-                result.setMessage(message);
-                result.setGroupHeader(headers);
-                result.setGroupHeaderTotal(HeaderTotal);
-                return result;
             }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            result.setMessage(message);
+            result.setGroupHeader(headers);
+            result.setGroupHeaderTotal(HeaderTotal);
+            return result;
+        } catch (Exception e) {
+            log.error("getShareDocumentReport failed: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
+            result.setGroupHeader(Collections.emptyList());
+            result.setGroupHeaderTotal(Collections.emptyList());
+            return result;
         }
-        return result;
-    }
-    public GroupHeaderRes getShareDocumentReportText(GroupHeaderReq documentReq){
-        Message message = new Message();
-        GroupHeaderRes result = new GroupHeaderRes();
-        List<DocumentAudit> listData = new ArrayList<>();
-        listData = documentImpl.getShareDocumentReport(documentReq);
-        List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
-        GroupHeader groupHeader = new GroupHeader();
-        List<GroupHeader> headers = new ArrayList<>();
-        List<DocumentAudit> resDataItems = new ArrayList<>();
-        for (String reNo : refIds){
-            groupHeader = new GroupHeader();
-            groupHeader.setRelated_Name(listData.stream().filter(p -> p.getRelated_Name().equals(reNo)).map(DocumentAudit::getRelated_Name).findFirst().orElse(""));
-            headers.add(groupHeader);
-            resDataItems = new ArrayList<>();
-            for (DocumentAudit rspList : listData) {
-                if(rspList.getRelated_Name().equals(reNo)) {
-                    DocumentAudit rsShow = new DocumentAudit();
-                    rsShow.setRelated_Name(rspList.getRelated_Name());
-                    rsShow.setConnects(rspList.getConnects());
-                    rsShow.setTaiMard(rspList.getTaiMard());
-                    rsShow.setYearIn(rspList.getYearIn());
-                    rsShow.setTaiMardDes(rspList.getTaiMardDes());
-                    rsShow.setYearInDes(rspList.getYearInDes());
-                    rsShow.setId(rspList.getId());
-                    rsShow.setSubjectName(rspList.getSubjectName());
-                    rsShow.setApproveDate(rspList.getApproveDate());
-                    rsShow.setDocNo(rspList.getDocNo());
-                    rsShow.setSubjectName(rspList.getSubjectName());
-                    rsShow.setRelated(rspList.getRelated());
-                    rsShow.setDepDescEN(rspList.getDepDescEN());
-                    rsShow.setDepDescLAO(rspList.getDepDescLAO());
-                    rsShow.setDocPath(rspList.getDocPath());
-                    rsShow.setCreateDate(rspList.getCreateDate());
-                    rsShow.setMarkerId(rspList.getMarkerId());
-                    rsShow.setUserName(rspList.getUserName());
-                    rsShow.setDocType(rspList.getDocType());
-                    rsShow.setDocDescEn(rspList.getDocDescEn());
-                    rsShow.setDocDescLao(rspList.getDocDescLao());
-                    rsShow.setDocStatus(rspList.getDocStatus());
-                    rsShow.setSharingType(rspList.getSharingType());
-                    rsShow.setDocPathLa(rspList.getDocPathLa());
-                    rsShow.setDocDate(rspList.getDocDate());
-                    rsShow.setCreateBy(rspList.getCreateBy());
-                    resDataItems.add(rsShow);
-                }
-            }
-            groupHeader.setDetails(resDataItems);
-        }
-        try {
-            if (listData.size() > 0) {
-                message.setResCode(Constant.codeDone);
-                message.setResMgs(Constant.msgDone);
-                result.setMessage(message);
-                result.setGroupHeader(headers);
-                return result;
-            } else {
-                message.setResCode(Constant.codeDataNotFound);
-                message.setResMgs(Constant.msgDataNotFound);
-                result.setMessage(message);
-                result.setGroupHeader(headers);
-                return result;
-            }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
-        }
-        return result;
     }
     //****************
     public GroupHeaderRes getShareDocumentReportText02(GroupHeaderReq documentReq){
         Message message = new Message();
         GroupHeaderRes result = new GroupHeaderRes();
-        List<DocumentAudit> listData = new ArrayList<>();
-        listData = documentImpl.getShareDocumentReportByText(documentReq);
-        List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
-        GroupHeader groupHeader = new GroupHeader();
-        List<GroupHeader> headers = new ArrayList<>();
-        List<DocumentAudit> resDataItems = new ArrayList<>();
-        for (String reNo : refIds){
-            groupHeader = new GroupHeader();
-            groupHeader.setRelated_Name(listData.stream().filter(p -> p.getRelated_Name().equals(reNo)).map(DocumentAudit::getRelated_Name).findFirst().orElse(""));
-            headers.add(groupHeader);
-            resDataItems = new ArrayList<>();
-            for (DocumentAudit rspList : listData) {
-                if(rspList.getRelated_Name().equals(reNo)) {
-                    DocumentAudit rsShow = new DocumentAudit();
-                    rsShow.setTypeDoc(rspList.getTypeDoc());
-                    rsShow.setRelated_Name(rspList.getRelated_Name());
-                    rsShow.setConnects(rspList.getConnects());
-                    rsShow.setTaiMard(rspList.getTaiMard());
-                    rsShow.setYearIn(rspList.getYearIn());
-                    rsShow.setTaiMardDes(rspList.getTaiMardDes());
-                    rsShow.setYearInDes(rspList.getYearInDes());
-                    rsShow.setId(rspList.getId());
-                    rsShow.setSubjectName(rspList.getSubjectName());
-                    rsShow.setApproveDate(rspList.getApproveDate());
-                    rsShow.setDocNo(rspList.getDocNo());
-                    rsShow.setSubjectName(rspList.getSubjectName());
-                    rsShow.setRelated(rspList.getRelated());
-                    rsShow.setDepDescEN(rspList.getDepDescEN());
-                    rsShow.setDepDescLAO(rspList.getDepDescLAO());
-                    rsShow.setDocPath(rspList.getDocPath());
-                    rsShow.setCreateDate(rspList.getCreateDate());
-                    rsShow.setMarkerId(rspList.getMarkerId());
-                    rsShow.setUserName(rspList.getUserName());
-                    rsShow.setDocType(rspList.getDocType());
-                    rsShow.setDocDescEn(rspList.getDocDescEn());
-                    rsShow.setDocDescLao(rspList.getDocDescLao());
-                    rsShow.setDocStatus(rspList.getDocStatus());
-                    rsShow.setSharingType(rspList.getSharingType());
-                    rsShow.setDocPathLa(rspList.getDocPathLa());
-                    rsShow.setDocDate(rspList.getDocDate());
-                    rsShow.setCreateBy(rspList.getCreateBy());
-                    resDataItems.add(rsShow);
-                }
-            }
-            groupHeader.setDetails(resDataItems);
-        }
         try {
+            List<DocumentAudit> listData = documentImpl.getShareDocumentReportByText(documentReq);
+            List<String> refIds = listData.stream().map(DocumentAudit::getRelated_Name).distinct().collect(Collectors.toList());
+            List<GroupHeader> headers = new ArrayList<>();
+            List<DocumentAudit> resDataItems;
+            for (String reNo : refIds){
+                GroupHeader groupHeader = new GroupHeader();
+                groupHeader.setRelated_Name(listData.stream().filter(p -> Objects.equals(p.getRelated_Name(), reNo)).map(DocumentAudit::getRelated_Name).filter(Objects::nonNull).findFirst().orElse(""));
+                headers.add(groupHeader);
+                resDataItems = new ArrayList<>();
+                for (DocumentAudit rspList : listData) {
+                    if (Objects.equals(rspList.getRelated_Name(), reNo)) {
+                        DocumentAudit rsShow = new DocumentAudit();
+                        rsShow.setTypeDoc(rspList.getTypeDoc());
+                        rsShow.setRelated_Name(rspList.getRelated_Name());
+                        rsShow.setConnects(rspList.getConnects());
+                        rsShow.setTaiMard(rspList.getTaiMard());
+                        rsShow.setYearIn(rspList.getYearIn());
+                        rsShow.setTaiMardDes(rspList.getTaiMardDes());
+                        rsShow.setYearInDes(rspList.getYearInDes());
+                        rsShow.setId(rspList.getId());
+                        rsShow.setSubjectName(rspList.getSubjectName());
+                        rsShow.setApproveDate(rspList.getApproveDate());
+                        rsShow.setDocNo(rspList.getDocNo());
+                        rsShow.setSubjectName(rspList.getSubjectName());
+                        rsShow.setRelated(rspList.getRelated());
+                        rsShow.setDepDescEN(rspList.getDepDescEN());
+                        rsShow.setDepDescLAO(rspList.getDepDescLAO());
+                        rsShow.setDocPath(rspList.getDocPath());
+                        rsShow.setCreateDate(rspList.getCreateDate());
+                        rsShow.setMarkerId(rspList.getMarkerId());
+                        rsShow.setUserName(rspList.getUserName());
+                        rsShow.setDocType(rspList.getDocType());
+                        rsShow.setDocDescEn(rspList.getDocDescEn());
+                        rsShow.setDocDescLao(rspList.getDocDescLao());
+                        rsShow.setDocStatus(rspList.getDocStatus());
+                        rsShow.setSharingType(rspList.getSharingType());
+                        rsShow.setDocPathLa(rspList.getDocPathLa());
+                        rsShow.setDocDate(rspList.getDocDate());
+                        rsShow.setCreateBy(rspList.getCreateBy());
+                        resDataItems.add(rsShow);
+                    }
+                }
+                groupHeader.setDetails(resDataItems);
+            }
+
             if (listData.size() > 0) {
                 message.setResCode(Constant.codeDone);
                 message.setResMgs(Constant.msgDone);
-                result.setMessage(message);
-                result.setGroupHeader(headers);
-                return result;
             } else {
                 message.setResCode(Constant.codeDataNotFound);
                 message.setResMgs(Constant.msgDataNotFound);
-                result.setMessage(message);
-                result.setGroupHeader(headers);
-                return result;
             }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                // Handle ArrayIndexOutOfBoundsException
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
+            result.setMessage(message);
+            result.setGroupHeader(headers);
+            return result;
+        } catch (Exception e) {
+            log.error("getShareDocumentReportText02 failed: {}", e.getMessage(), e);
+            message.setResCode(Constant.codeError);
+            message.setResMgs(Constant.msgError);
+            result.setMessage(message);
+            result.setGroupHeader(Collections.emptyList());
+            return result;
         }
-        return result;
     }
     public DocumentAuditRes getShareDocumentGen(DocumentReq documentReq){
         DocumentAuditRes result = new DocumentAuditRes();

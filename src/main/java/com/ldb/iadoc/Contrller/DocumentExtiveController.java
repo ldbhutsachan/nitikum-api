@@ -58,190 +58,190 @@ public class DocumentExtiveController {
         result = loginService.getComboxDeptExcutive(sectionReq);
         return result;
     }
-    //******************************save document
-    @CrossOrigin(origins = "*")
-    @PostMapping(value = "/Document/SaveDocExcutive" , consumes = {"multipart/form-data"})
-    public ReponeRes SaveDoc(
-            @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
-            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
-            @RequestParam("docNo") String docNo,
-            @RequestParam("subjectName") String subjectName,
-            @RequestParam("docDate") String docDate,
-            @RequestParam("docType") String docType,
-            @RequestParam("related") String related,
-            @RequestParam("deptCode") String deptCode,
-            @RequestParam("shareUserById") String shareUserById,
-            @RequestParam("markerId") String markerId,
-            @RequestParam("sharingType") String sharingType,
-            @RequestParam("details") String details,
-            @RequestParam("taiMard") String taiMard,
-            @RequestParam("yearIn") String yearIn,
-            @RequestParam("conName") String conName,
-            @RequestParam("conName2") String conName2,
-            @RequestParam(value = "old_image1", required = false) String  old_image1,
-            @RequestParam(value = "old_image2", required = false) String  old_image2
-    ){
-        log.info("====================================================>SaveDoc controller<=========================");
-        Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
-        String namefile = formatter.format(date);
-        ReponeRes result = new ReponeRes();
-        try{
-            DocumentReq data = new DocumentReq();
-            data.setConName2(conName2);
-            data.setTaiMard(taiMard);
-            data.setYearIn(yearIn);
-            data.setDocNo(docNo);
-            data.setSubjectName(subjectName);
-            data.setDocDate(docDate);
-            data.setDocType(docType);
-            data.setRelated(related);
-            data.setDeptCode(deptCode);
-            data.setShareUserById(shareUserById);
-            data.setMarkerId(markerId);
-            data.setSharingType(sharingType);
-            data.setDetails(details);
-            data.setConName(conName);
-            String fileNameEn = "";
-            String fileNameLa = "";
-            List<String> fileNamesEn = new ArrayList<>();
-            List<String> fileNamesLa = new ArrayList<>();
-            //==========================ກວດສອບ ໄຟທີ 1==================================
-            if(filesEn == null){
-                log.warn("************* file EN is null ****************");
-                data.setDocPath(old_image1);
-            }
-            else if(filesEn != null) {
-                Arrays.asList(filesEn).stream().forEach(file -> {
-                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
-                });
-                log.info("Uploaded the files successfully: "+ fileNamesEn);
-                fileNameEn = StringUtils.join(fileNamesEn, ',');
-                data.setDocPath(fileNameEn);
-            }
-            //   ==========================ກວດສອບ ໄຟທີ 2==================================
-            if(filesLao == null ){
-                log.warn("************* file LAO is null ****************");
-                data.setDocPathLa(old_image2);
-            }else if(filesLao != null){
-                log.warn("************* file LAO no null ****************");
-                Arrays.asList(filesLao).stream().forEach(file -> {
-                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
-                });
-                fileNameLa = StringUtils.join(fileNamesLa, ',');
-                data.setDocPathLa(fileNameLa);
-            }
-            result = documentService.SaveDocExcutive(data);
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
-        }
-        return  result;
-    }
-    @CrossOrigin(origins = "*")
-    @PostMapping(value = "/Document/updateDocExcutive" , consumes = {"multipart/form-data"})
-    public ReponeRes updateDoc(
-
-            @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
-            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
-            @RequestParam("docNo") String docNo,
-            @RequestParam("subjectName") String subjectName,
-            @RequestParam("docDate") String docDate,
-            @RequestParam("docType") String docType,
-            @RequestParam("related") String related,
-            @RequestParam("deptCode") String deptCode,
-            @RequestParam("shareUserById") String shareUserById,
-            @RequestParam("markerId") String markerId,
-            @RequestParam("sharingType") String sharingType,
-            @RequestParam("details") String details,
-            @RequestParam("taiMard") String taiMard,
-            @RequestParam("yearIn") String yearIn,
-            @RequestParam("conName") String conName,
-            @RequestParam("id") String id,
-            @RequestParam(value = "old_image1", required = false) String  old_image1,
-            @RequestParam(value = "old_image2", required = false) String  old_image2
-    ){
-        log.info("====================================================>UPDATE controller<=========================");
-        Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
-        String namefile = formatter.format(date);
-        ReponeRes result = new ReponeRes();
-        try{
-            log.info("lo:"+filesLao);
-            DocumentReq data = new DocumentReq();
-            // data.setConnects(connects);
-            data.setTaiMard(taiMard);
-            data.setYearIn(yearIn);
-            data.setDocNo(docNo);
-            data.setSubjectName(subjectName);
-            data.setDocDate(docDate);
-            data.setDocType(docType);
-            data.setRelated(related);
-            data.setDeptCode(deptCode);
-            data.setShareUserById(shareUserById);
-            data.setMarkerId(markerId);
-            data.setSharingType(sharingType);
-            data.setDetails(details);
-            data.setConName(conName);
-            data.setId(id);
-            String fileNameEn = "";
-            String fileNameLa = "";
-            List<String> fileNamesEn = new ArrayList<>();
-            List<String> fileNamesLa = new ArrayList<>();
-            //==========================ກວດສອບ ໄຟທີ 1==================================
-            if(filesEn == null || filesEn.length == 0 || filesEn.equals(null) || filesEn.equals("")){
-                log.warn("************* file EN is null ****************");
-                data.setDocPath(old_image1);
-            }
-            else if(filesEn != null || filesEn.length != 0 || !filesEn.equals(null) || !filesEn.equals("")){
-                Arrays.asList(filesEn).stream().forEach(file -> {
-                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
-                });
-                log.info("Uploaded the files successfully: "+ fileNamesEn);
-                fileNameEn = StringUtils.join(fileNamesEn, ',');
-                data.setDocPath(fileNameEn);
-            }
-            //   ==========================ກວດສອບ ໄຟທີ 2==================================
-            if(filesLao == null || filesLao.length == 0 || filesLao.equals(null) || filesLao.equals("")){
-                log.warn("************* file LAO is null ****************");
-                data.setDocPathLa(old_image2);
-                result = documentService.updateDocExcutiveNoFile(data);
-            }
-            else if(filesLao != null || filesLao.length != 0 || !filesLao.equals(null) || !filesLao.equals("")){
-                log.warn("************* file LAO no null ****************");
-                Arrays.asList(filesLao).stream().forEach(file -> {
-                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
-                });
-                fileNameLa = StringUtils.join(fileNamesLa, ',');
-                data.setDocPathLa(fileNameLa);
-                result = documentService.updateDocExcutive(data);
-            }
-        }catch (Exception e){
-            if (e instanceof NullPointerException) {
-                System.out.println("NullPointerException occurred");
-            } else if (e instanceof IllegalArgumentException) {
-                System.out.println("IllegalArgumentException occurred");
-            } else if (e instanceof ArrayIndexOutOfBoundsException) {
-                System.out.println("ArrayIndexOutOfBoundsException occurred");
-            } else {
-                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
-            }
-            String errorMessage = e.getMessage();
-            System.out.println("Error message: " + errorMessage);
-            e.printStackTrace();
-        }
-        return  result;
-    }
+//    //******************************save document
+//    @CrossOrigin(origins = "*")
+//    @PostMapping(value = "/Document/SaveDocExcutive" , consumes = {"multipart/form-data"})
+//    public ReponeRes SaveDoc(
+//            @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
+//            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
+//            @RequestParam("docNo") String docNo,
+//            @RequestParam("subjectName") String subjectName,
+//            @RequestParam("docDate") String docDate,
+//            @RequestParam("docType") String docType,
+//            @RequestParam("related") String related,
+//            @RequestParam("deptCode") String deptCode,
+//            @RequestParam("shareUserById") String shareUserById,
+//            @RequestParam("markerId") String markerId,
+//            @RequestParam("sharingType") String sharingType,
+//            @RequestParam("details") String details,
+//            @RequestParam("taiMard") String taiMard,
+//            @RequestParam("yearIn") String yearIn,
+//            @RequestParam("conName") String conName,
+//            @RequestParam("conName2") String conName2,
+//            @RequestParam(value = "old_image1", required = false) String  old_image1,
+//            @RequestParam(value = "old_image2", required = false) String  old_image2
+//    ){
+//        log.info("====================================================>SaveDoc controller<=========================");
+//        Date date = new Date();
+//        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
+//        String namefile = formatter.format(date);
+//        ReponeRes result = new ReponeRes();
+//        try{
+//            DocumentReq data = new DocumentReq();
+//            data.setConName2(conName2);
+//            data.setTaiMard(taiMard);
+//            data.setYearIn(yearIn);
+//            data.setDocNo(docNo);
+//            data.setSubjectName(subjectName);
+//            data.setDocDate(docDate);
+//            data.setDocType(docType);
+//            data.setRelated(related);
+//            data.setDeptCode(deptCode);
+//            data.setShareUserById(shareUserById);
+//            data.setMarkerId(markerId);
+//            data.setSharingType(sharingType);
+//            data.setDetails(details);
+//            data.setConName(conName);
+//            String fileNameEn = "";
+//            String fileNameLa = "";
+//            List<String> fileNamesEn = new ArrayList<>();
+//            List<String> fileNamesLa = new ArrayList<>();
+//            //==========================ກວດສອບ ໄຟທີ 1==================================
+//            if(filesEn == null){
+//                log.warn("************* file EN is null ****************");
+//                data.setDocPath(old_image1);
+//            }
+//            else if(filesEn != null) {
+//                Arrays.asList(filesEn).stream().forEach(file -> {
+//                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
+//                });
+//                log.info("Uploaded the files successfully: "+ fileNamesEn);
+//                fileNameEn = StringUtils.join(fileNamesEn, ',');
+//                data.setDocPath(fileNameEn);
+//            }
+//            //   ==========================ກວດສອບ ໄຟທີ 2==================================
+//            if(filesLao == null ){
+//                log.warn("************* file LAO is null ****************");
+//                data.setDocPathLa(old_image2);
+//            }else if(filesLao != null){
+//                log.warn("************* file LAO no null ****************");
+//                Arrays.asList(filesLao).stream().forEach(file -> {
+//                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
+//                });
+//                fileNameLa = StringUtils.join(fileNamesLa, ',');
+//                data.setDocPathLa(fileNameLa);
+//            }
+//            result = documentService.SaveDocExcutive(data);
+//        }catch (Exception e){
+//            if (e instanceof NullPointerException) {
+//                System.out.println("NullPointerException occurred");
+//            } else if (e instanceof IllegalArgumentException) {
+//                System.out.println("IllegalArgumentException occurred");
+//            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+//                System.out.println("ArrayIndexOutOfBoundsException occurred");
+//            } else {
+//                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+//            }
+//            String errorMessage = e.getMessage();
+//            System.out.println("Error message: " + errorMessage);
+//            e.printStackTrace();
+//        }
+//        return  result;
+//    }
+//    @CrossOrigin(origins = "*")
+//    @PostMapping(value = "/Document/updateDocExcutive" , consumes = {"multipart/form-data"})
+//    public ReponeRes updateDoc(
+//
+//            @RequestParam(name="filesLao" , required=false) MultipartFile[] filesLao,
+//            @RequestParam(name="filesEn" , required=false) MultipartFile[] filesEn,
+//            @RequestParam("docNo") String docNo,
+//            @RequestParam("subjectName") String subjectName,
+//            @RequestParam("docDate") String docDate,
+//            @RequestParam("docType") String docType,
+//            @RequestParam("related") String related,
+//            @RequestParam("deptCode") String deptCode,
+//            @RequestParam("shareUserById") String shareUserById,
+//            @RequestParam("markerId") String markerId,
+//            @RequestParam("sharingType") String sharingType,
+//            @RequestParam("details") String details,
+//            @RequestParam("taiMard") String taiMard,
+//            @RequestParam("yearIn") String yearIn,
+//            @RequestParam("conName") String conName,
+//            @RequestParam("id") String id,
+//            @RequestParam(value = "old_image1", required = false) String  old_image1,
+//            @RequestParam(value = "old_image2", required = false) String  old_image2
+//    ){
+//        log.info("====================================================>UPDATE controller<=========================");
+//        Date date = new Date();
+//        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyyss");
+//        String namefile = formatter.format(date);
+//        ReponeRes result = new ReponeRes();
+//        try{
+//            log.info("lo:"+filesLao);
+//            DocumentReq data = new DocumentReq();
+//            // data.setConnects(connects);
+//            data.setTaiMard(taiMard);
+//            data.setYearIn(yearIn);
+//            data.setDocNo(docNo);
+//            data.setSubjectName(subjectName);
+//            data.setDocDate(docDate);
+//            data.setDocType(docType);
+//            data.setRelated(related);
+//            data.setDeptCode(deptCode);
+//            data.setShareUserById(shareUserById);
+//            data.setMarkerId(markerId);
+//            data.setSharingType(sharingType);
+//            data.setDetails(details);
+//            data.setConName(conName);
+//            data.setId(id);
+//            String fileNameEn = "";
+//            String fileNameLa = "";
+//            List<String> fileNamesEn = new ArrayList<>();
+//            List<String> fileNamesLa = new ArrayList<>();
+//            //==========================ກວດສອບ ໄຟທີ 1==================================
+//            if(filesEn == null || filesEn.length == 0 || filesEn.equals(null) || filesEn.equals("")){
+//                log.warn("************* file EN is null ****************");
+//                data.setDocPath(old_image1);
+//            }
+//            else if(filesEn != null || filesEn.length != 0 || !filesEn.equals(null) || !filesEn.equals("")){
+//                Arrays.asList(filesEn).stream().forEach(file -> {
+//                    fileNamesEn.add(mediaUploadService.uploadDirectoryDocEn(file));
+//                });
+//                log.info("Uploaded the files successfully: "+ fileNamesEn);
+//                fileNameEn = StringUtils.join(fileNamesEn, ',');
+//                data.setDocPath(fileNameEn);
+//            }
+//            //   ==========================ກວດສອບ ໄຟທີ 2==================================
+//            if(filesLao == null || filesLao.length == 0 || filesLao.equals(null) || filesLao.equals("")){
+//                log.warn("************* file LAO is null ****************");
+//                data.setDocPathLa(old_image2);
+//                result = documentService.updateDocExcutiveNoFile(data);
+//            }
+//            else if(filesLao != null || filesLao.length != 0 || !filesLao.equals(null) || !filesLao.equals("")){
+//                log.warn("************* file LAO no null ****************");
+//                Arrays.asList(filesLao).stream().forEach(file -> {
+//                    fileNamesLa.add(mediaUploadService.uploadDirectoryDocLa(file));
+//                });
+//                fileNameLa = StringUtils.join(fileNamesLa, ',');
+//                data.setDocPathLa(fileNameLa);
+//                result = documentService.updateDocExcutive(data);
+//            }
+//        }catch (Exception e){
+//            if (e instanceof NullPointerException) {
+//                System.out.println("NullPointerException occurred");
+//            } else if (e instanceof IllegalArgumentException) {
+//                System.out.println("IllegalArgumentException occurred");
+//            } else if (e instanceof ArrayIndexOutOfBoundsException) {
+//                System.out.println("ArrayIndexOutOfBoundsException occurred");
+//            } else {
+//                System.out.println("An exception occurred: " + e.getClass().getSimpleName());
+//            }
+//            String errorMessage = e.getMessage();
+//            System.out.println("Error message: " + errorMessage);
+//            e.printStackTrace();
+//        }
+//        return  result;
+//    }
     @CrossOrigin(origins = "*")
     @PostMapping("/Audit/getWaitListCheckExcutive")
     public DocumentAuditRes getWaitListCheckExcutive(@RequestBody DocumentReq documentReq){

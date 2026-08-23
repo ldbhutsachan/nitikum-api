@@ -84,7 +84,7 @@ public class DocumentImpl implements DocumentDao {
         String trimmedStr = str.substring(0, str.length() - 0);
         String[] bandArray = trimmedStr.split(",");
         System.out.println("show array:"+Arrays.toString(bandArray));
-        SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE," +
+        String SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE," +
                 "SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
         for (String branch : bandArray) {
             IADOCJdbcTemplate.update(SQL,
@@ -110,7 +110,7 @@ public class DocumentImpl implements DocumentDao {
         String[] bandArray = trimmedStr.split(",");
         System.out.println("show array 99960:"+Arrays.toString(bandArray));
         log.info("show:"+documentReq.getDocDate());
-        SQL="insert into DOC_CREATE_TEMP (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,type,RELETED_NO) " +
+        String SQL="insert into DOC_CREATE_TEMP (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,type,RELETED_NO) " +
                 "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?)";
         for (String branch : bandArray) {
             IADOCJdbcTemplate.update(SQL,
@@ -138,7 +138,7 @@ public class DocumentImpl implements DocumentDao {
         String trimmedStr = str.substring(0, str.length() - 0);
         String[] bandArray = trimmedStr.split(",");
         System.out.println("show array 999:"+Arrays.toString(bandArray));
-        SQL="insert into RELATED (SECTION_CODE,DOC_NO) values(?,?)";
+        String SQL="insert into RELATED (SECTION_CODE,DOC_NO) values(?,?)";
         for (String branch : bandArray) {
             IADOCJdbcTemplate.update(SQL,
                     branch,
@@ -150,7 +150,7 @@ public class DocumentImpl implements DocumentDao {
     public int saveSharingDoBranchNoarray(DocumentReq documentReq,String keyDocNo) {
 
         String ListBranch = documentReq.getRelated();
-        SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE,SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
+        String SQL="insert into DOC_SHARING (DOC_TYPE,SHAREBYBRANCH,CREATE_DATE,SESSION_TYPE,SES_STATUS) values(?,?,sysdate,?,'U')";
         log.info("show sql array:"+SQL);
             IADOCJdbcTemplate.update(SQL,
                     keyDocNo,
@@ -178,7 +178,7 @@ public class DocumentImpl implements DocumentDao {
     @Override
     public int SaveDocument(DocumentReq documentReq,String keyDocNo) throws ParseException {
      log.info("show:"+documentReq.getDocDate());
-        SQL="insert into DOC_CREATE (type_doc,STATUS_SHOW,SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE," +
+        String SQL="insert into DOC_CREATE (type_doc,STATUS_SHOW,SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE," +
                 "RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID," +
                 "SHARING_TYPE,DETAILS,type,RELETED_NAME,DOC_KEY) " +
                 "values (?,'N',?,?,?,?,?,'W',?,?,sysdate,?,?,?,'1',?,?)";
@@ -188,14 +188,14 @@ public class DocumentImpl implements DocumentDao {
                 documentReq.getDocNo(), //ລະຫັດເອກະສານ
                 documentReq.getDocType(), //ປະເພດເອກະສານ
                 documentReq.getDocDate(), //ເອກະສານລົງວັນທີ່
-                documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
+                documentReq.getRelated_No(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ  related_No  getRelated
                 //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
                 documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
                 documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
                 documentReq.getMarkerId(),//ຜູ້ສ້າງ
                 documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
                 documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
-                documentReq.getRelated_Name(),
+                documentReq.getRelated_Name(),//
                 keyDocNo
         });
     }
@@ -261,34 +261,34 @@ public class DocumentImpl implements DocumentDao {
         }
         return 0;
     }
-    @Override
-    public int SaveDocumentExcutive(DocumentReq documentReq) throws ParseException {
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date doDate = sdf.parse(documentReq.getDocDate());
-        java.sql.Date docDate = new java.sql.Date(doDate.getTime());
-
-        SQL="insert into DOC_CREATE (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,taimard,years,type,CONNECT_NAME,CONNNECT_NAME2) " +
-                "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?,?,?,'2',?,?)";
-        return IADOCJdbcTemplate.update(SQL,new Object[]{
-               documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
-                documentReq.getDocNo(), //ລະຫັດເອກະສານ
-                documentReq.getDocType(), //ປະເພດເອກະສານ
-                docDate, //ເອກະສານລົງວັນທີ່
-                documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
-                //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
-                documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
-                documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
-                documentReq.getMarkerId(),//ຜູ້ສ້າງ
-                documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
-                documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
-                documentReq.getTaiMard(),
-                documentReq.getYearIn(),
-                documentReq.getConName(),
-                documentReq.getConName2()
-
-        });
-    }
+//    @Override
+//    public int SaveDocumentExcutive(DocumentReq documentReq) throws ParseException {
+//
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+//        Date doDate = sdf.parse(documentReq.getDocDate());
+//        java.sql.Date docDate = new java.sql.Date(doDate.getTime());
+//
+//        SQL="insert into DOC_CREATE (SUBJECTNAME,DOC_NO,DOC_TYPE,DOC_DATE,RELATED,DOC_STATUS,DOC_PATH,DOC_PATH_LA,CREATED_DATE,MAKER_ID,SHARING_TYPE,DETAILS,taimard,years,type,CONNECT_NAME,CONNNECT_NAME2) " +
+//                "values (?,?,?,?,?,'W',?,?,sysdate,?,?,?,?,?,'2',?,?)";
+//        return IADOCJdbcTemplate.update(SQL,new Object[]{
+//               documentReq.getSubjectName(),//ຫົວຂໍ້ເອກະສານ
+//                documentReq.getDocNo(), //ລະຫັດເອກະສານ
+//                documentReq.getDocType(), //ປະເພດເອກະສານ
+//                docDate, //ເອກະສານລົງວັນທີ່
+//                documentReq.getRelated(),//ເອກະສານຕິດພັນກັບສາຂາ/ຝ່າຍ
+//                //documentReq.getDocStatus(),//ສະຖານະເອກະສານ W = Waiting for doc  U = Uploaded
+//                documentReq.getDocPath(), //path ເກັບ ເອກະສານພາສາອັງກິດ
+//                documentReq.getDocPathLa(),//path ເກັບ ເອກະສານພາສາລາວ
+//                documentReq.getMarkerId(),//ຜູ້ສ້າງ
+//                documentReq.getSharingType(),//ປະເພດການແບ່ງປັນເອກະສານ
+//                documentReq.getDetails(),//ລາຍລະອຽດເອກະສານ
+//                documentReq.getTaiMard(),
+//                documentReq.getYearIn(),
+//                documentReq.getConName(),
+//                documentReq.getConName2()
+//
+//        });
+//    }
     @Override
     public int updateDocExcutive(DocumentReq documentReq) throws ParseException {
 
@@ -431,7 +431,7 @@ public class DocumentImpl implements DocumentDao {
 
     @Override
     public List<KeyReq> getMaxKey(){
-        SQL="select max(id+1) docKey from doc_create";
+        String SQL="select max(id+1) docKey from doc_create";
         return IADOCJdbcTemplate.query(SQL, new RowMapper<KeyReq>() {
             @Override
             public KeyReq mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -441,6 +441,23 @@ public class DocumentImpl implements DocumentDao {
                 return tr;
             }
         });
+    }
+
+    @Override
+    public String getNextDocKeyForUpdate() {
+        // Locks the row currently holding MAX(id) so a concurrent caller running the
+        // same statement blocks until this transaction commits/rolls back, instead of
+        // both computing the same "next" key from an unlocked read (the original bug).
+        // WAIT 5 bounds how long a caller blocks if a prior transaction is stuck,
+        // instead of hanging forever - it surfaces as a normal caught SQLException.
+        String SQL = "SELECT id FROM doc_create WHERE id = (SELECT MAX(id) FROM doc_create) FOR UPDATE WAIT 5";
+        List<String> lockedIds = IADOCJdbcTemplate.query(SQL, (rs, rowNum) -> rs.getString("id"));
+        if (lockedIds.isEmpty()) {
+            // Table is empty - nothing to lock against yet, so this narrow edge case
+            // (two simultaneous "first ever" inserts) isn't covered by the row lock.
+            return "1";
+        }
+        return String.valueOf(Long.parseLong(lockedIds.get(0)) + 1);
     }
     public List<Related> getRsplistRelated() {
         List<Related> data = new ArrayList<>();
@@ -509,7 +526,7 @@ public class DocumentImpl implements DocumentDao {
         try {
             String SQL = "SELECT  a.DOC_KEY,\n" +
                     "a.doc_no,b.BRANCH_CODE,b.BRANCH_NAME_LAO\n" +
-                    "FROM DOC_CREATE a LEFT JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  and a.DOC_STATUS NOT IN ('W', 'D')  ORDER BY  a.DOC_NO DESC ";
+                    "FROM DOC_CREATE a LEFT JOIN  branch b ON ',' || a.RELETED_NAME || ',' LIKE '%,' || b.BRANCH_CODE || ',%' WHERE  a.type = '1'  AND a.DOC_NO IS NOT NULL  and a.DOC_STATUS NOT IN ('D')  ORDER BY  a.DOC_NO DESC ";
             log.info("Executing SQL: {}", SQL);
 
             data = IADOCJdbcTemplate.query(SQL, new RowMapper<RelatedShow>() {
